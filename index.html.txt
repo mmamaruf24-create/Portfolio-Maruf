@@ -1,0 +1,2449 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Md. Mahfuz Al Maruf — P-Tree Portfolio</title>
+
+  <!-- Google Fonts: Cormorant Garamond & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            gallery: '#0d0f0e',
+            surface: '#141716',
+            elevated: '#1b1f1d',
+            alabaster: '#f3f1ec',
+            stone: '#9a9890',
+            gold: '#d4a857',
+            sage: '#7fa38b',
+          },
+          fontFamily: {
+            serif: ['"Cormorant Garamond"', 'Georgia', 'serif'],
+            sans: ['"Inter"', 'system-ui', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    :root {
+      --bg-gallery: #0d0f0e;
+      --bg-surface: #141716;
+      --text-alabaster: #f3f1ec;
+      --text-stone: #9a9890;
+      --accent-gold: #d4a857;
+      --accent-sage: #7fa38b;
+    }
+
+    body {
+      background-color: var(--bg-gallery);
+      color: var(--text-alabaster);
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* Dropdown Transitions */
+    .dropdown-panel {
+      opacity: 0;
+      transform: translateY(8px);
+      pointer-events: none;
+      transition: opacity 0.22s ease, transform 0.22s ease;
+    }
+    .dropdown-open .dropdown-panel {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+    .dropdown-open .dropdown-chevron {
+      transform: rotate(180deg);
+    }
+
+    /* Interactive P-Tree SVG Styling */
+    .tree-limb {
+      transition: stroke 0.35s ease, stroke-width 0.35s ease, opacity 0.35s ease;
+    }
+    .tree-limb.active {
+      stroke: #d4a857 !important;
+      stroke-width: 4.2px !important;
+      filter: drop-shadow(0 0 8px rgba(212, 168, 87, 0.45));
+    }
+
+    .canopy-node {
+      cursor: pointer;
+      transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease;
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+    .canopy-node:hover {
+      transform: scale(1.035);
+    }
+    .canopy-node .node-frame {
+      transition: stroke 0.3s ease, fill 0.3s ease, stroke-width 0.3s ease;
+    }
+    .canopy-node.active .node-frame {
+      stroke: #d4a857;
+      stroke-width: 2.2px;
+      fill: #1f1d17;
+    }
+    .canopy-node.active .node-badge {
+      fill: #d4a857;
+    }
+    .canopy-node.active .node-badge-text {
+      fill: #0d0f0e;
+    }
+
+    /* True Aspect-Ratio Editorial Masonry Grid */
+    .masonry-grid {
+      column-count: 1;
+      column-gap: 1.5rem;
+    }
+    @media (min-width: 640px) {
+      .masonry-grid {
+        column-count: 2;
+      }
+    }
+    @media (min-width: 1024px) {
+      .masonry-grid {
+        column-count: 3;
+      }
+    }
+    .masonry-item {
+      break-inside: avoid;
+      margin-bottom: 1.5rem;
+    }
+    .photo-plate img {
+      transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .photo-plate:hover img {
+      transform: scale(1.025);
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 7px;
+      height: 7px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0d0f0e;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #252927;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #d4a857;
+    }
+  </style>
+</head>
+<body class="antialiased selection:bg-gold/30 selection:text-alabaster">
+
+  <!-- Hidden File Inputs for Bulk Files, Folder Selection, and Single-Slot Binding -->
+  <input type="file" id="bulkFileInput" multiple accept="image/*" class="hidden" onchange="handleBulkFileSelection(this.files)" />
+  <input type="file" id="folderFileInput" webkitdirectory directory multiple accept="image/*" class="hidden" onchange="handleBulkFileSelection(this.files)" />
+  <input type="file" id="singleSlotInput" accept="image/*" class="hidden" onchange="handleSingleSlotSelection(this.files)" />
+
+  <!-- Full-Screen Drag & Drop Overlay -->
+  <div id="dragDropOverlay" class="fixed inset-0 z-50 hidden bg-gallery/90 backdrop-blur-md border-2 border-dashed border-gold/70 m-4 rounded-3xl flex flex-col items-center justify-center text-center p-6 pointer-events-none">
+    <div class="w-16 h-16 rounded-2xl bg-gold/15 border border-gold/40 flex items-center justify-center text-gold text-2xl mb-4">
+      ↓
+    </div>
+    <p class="font-serif text-3xl sm:text-4xl font-semibold text-alabaster">Drop Your Photography Files Anywhere</p>
+    <p class="text-sm text-stone mt-2 max-w-md">
+      Files are automatically matched by filename (e.g., <code class="text-gold">IMG_3279.jpg</code>, <code class="text-gold">_MG_3480.jpg</code>) and saved locally in your browser.
+    </p>
+  </div>
+
+  <!-- Toast Notification Banner -->
+  <div id="statusToast" class="fixed bottom-5 right-5 z-50 hidden max-w-sm bg-surface border border-gold/50 text-alabaster px-4 py-3 rounded-2xl shadow-2xl text-xs sm:text-sm flex items-center gap-3">
+    <span class="w-2 h-2 rounded-full bg-gold shrink-0"></span>
+    <span id="statusToastText">Photos matched and saved.</span>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- STICKY GLASSMORPHIC HEADER WITH DROPDOWN NAVIGATION                   -->
+  <!-- ===================================================================== -->
+  <header class="sticky top-0 z-40 bg-gallery/85 backdrop-blur-xl border-b border-white/[0.08]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
+      
+      <!-- Brand Identity -->
+      <a href="#top" class="flex items-center gap-3.5 group">
+        <div class="w-9 h-9 rounded-xl bg-surface border border-gold/40 flex items-center justify-center text-gold font-serif font-bold text-lg group-hover:border-gold transition">
+          P
+        </div>
+        <div>
+          <span class="block font-serif text-lg sm:text-xl font-semibold tracking-tight text-alabaster leading-none">
+            Md. Mahfuz Al Maruf
+          </span>
+          <span class="block text-[11px] text-stone tracking-wider mt-1">
+            Fleeting Time Machine · Rajshahi, Bangladesh
+          </span>
+        </div>
+      </a>
+
+      <!-- Desktop Navigation -->
+      <nav class="hidden lg:flex items-center gap-1.5" aria-label="Primary Navigation">
+        <a href="#p-tree" class="px-3.5 py-2 rounded-xl text-sm font-medium text-alabaster/90 hover:text-gold hover:bg-white/[0.04] transition">
+          P-Tree
+        </a>
+
+        <!-- Dropdown 1: P-Tree Genres -->
+        <div class="relative dropdown-container" id="navPhotoDropdown">
+          <button
+            type="button"
+            onclick="toggleDropdown('navPhotoDropdown')"
+            aria-expanded="false"
+            class="px-3.5 py-2 rounded-xl text-sm font-medium text-alabaster/90 hover:text-gold hover:bg-white/[0.04] transition flex items-center gap-1.5"
+          >
+            <span>P-Tree Genres</span>
+            <svg class="w-3.5 h-3.5 text-gold transition-transform duration-200 dropdown-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          <div class="dropdown-panel absolute left-0 mt-2 w-80 rounded-2xl bg-surface border border-white/10 shadow-2xl p-2 z-50">
+            <div class="px-3 py-1.5 flex items-center justify-between border-b border-white/[0.06] mb-1">
+              <span class="text-[10px] font-semibold uppercase tracking-widest text-stone">6 P-Tree Canopies</span>
+              <button onclick="navigateToBranch('all')" class="text-[11px] text-gold hover:underline">View All (33)</button>
+            </div>
+
+            <button onclick="navigateToBranch('wildlife')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-white/[0.05] transition flex items-center justify-between group">
+              <div>
+                <p class="text-sm font-medium text-alabaster group-hover:text-gold transition">1. Wildlife &amp; Avian</p>
+                <p class="text-[11px] text-stone">Birds, nests, mammals &amp; field light</p>
+              </div>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-elevated text-gold border border-gold/25">12</span>
+            </button>
+
+            <button onclick="navigateToBranch('architecture')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-white/[0.05] transition flex items-center justify-between group">
+              <div>
+                <p class="text-sm font-medium text-alabaster group-hover:text-gold transition">2. Architecture &amp; Heritage</p>
+                <p class="text-[11px] text-stone">Rajbari palaces, bridges, rails &amp; towers</p>
+              </div>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-elevated text-gold border border-gold/25">9</span>
+            </button>
+
+            <button onclick="navigateToBranch('lunar')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-white/[0.05] transition flex items-center justify-between group">
+              <div>
+                <p class="text-sm font-medium text-alabaster group-hover:text-gold transition">3. Lunar &amp; Night Sky</p>
+                <p class="text-[11px] text-stone">Crater relief, supermoon &amp; silhouettes</p>
+              </div>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-elevated text-gold border border-gold/25">4</span>
+            </button>
+
+            <button onclick="navigateToBranch('landscapes')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-white/[0.05] transition flex items-center justify-between group">
+              <div>
+                <p class="text-sm font-medium text-alabaster group-hover:text-gold transition">4. Landscapes &amp; Atmosphere</p>
+                <p class="text-[11px] text-stone">Golden river dusk &amp; storm rays</p>
+              </div>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-elevated text-gold border border-gold/25">4</span>
+            </button>
+
+            <button onclick="navigateToBranch('people')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-white/[0.05] transition flex items-center justify-between group">
+              <div>
+                <p class="text-sm font-medium text-alabaster group-hover:text-gold transition">5. People &amp; Everyday Life</p>
+                <p class="text-[11px] text-stone">Paddy harvest &amp; Rajshahi street stride</p>
+              </div>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-elevated text-gold border border-gold/25">2</span>
+            </button>
+
+            <button onclick="navigateToBranch('macro')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-white/[0.05] transition flex items-center justify-between group">
+              <div>
+                <p class="text-sm font-medium text-alabaster group-hover:text-gold transition">6. Natural History &amp; Macro</p>
+                <p class="text-[11px] text-stone">Preserved reptile specimen studies</p>
+              </div>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-elevated text-gold border border-gold/25">2</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Dropdown 2: Disciplines & Roadmap -->
+        <div class="relative dropdown-container" id="navDisciplinesDropdown">
+          <button
+            type="button"
+            onclick="toggleDropdown('navDisciplinesDropdown')"
+            aria-expanded="false"
+            class="px-3.5 py-2 rounded-xl text-sm font-medium text-alabaster/90 hover:text-sage hover:bg-white/[0.04] transition flex items-center gap-1.5"
+          >
+            <span>Disciplines &amp; Roadmap</span>
+            <svg class="w-3.5 h-3.5 text-sage transition-transform duration-200 dropdown-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          <div class="dropdown-panel absolute left-0 mt-2 w-72 rounded-2xl bg-surface border border-white/10 shadow-2xl p-2 z-50">
+            <div class="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-stone border-b border-white/[0.06] mb-1">
+              Multidisciplinary Branches
+            </div>
+            <a href="#research" onclick="closeAllDropdowns()" class="block px-3 py-2 rounded-xl hover:bg-white/[0.05] transition group">
+              <p class="text-sm font-medium text-alabaster group-hover:text-sage transition">Research &amp; Publications</p>
+              <p class="text-[11px] text-stone">RUEC Abstract Book &amp; future papers</p>
+            </a>
+            <a href="#design" onclick="closeAllDropdowns()" class="block px-3 py-2 rounded-xl hover:bg-white/[0.05] transition group">
+              <p class="text-sm font-medium text-alabaster group-hover:text-sage transition">Design &amp; Visual Identity</p>
+              <p class="text-[11px] text-stone">Brand marks, UI/UX &amp; event graphics</p>
+            </a>
+            <a href="#writing" onclick="closeAllDropdowns()" class="block px-3 py-2 rounded-xl hover:bg-white/[0.05] transition group">
+              <p class="text-sm font-medium text-alabaster group-hover:text-sage transition">Writing &amp; Essays</p>
+              <p class="text-[11px] text-stone">Narratives, field notes &amp; reflections</p>
+            </a>
+            <a href="#cs-projects" onclick="closeAllDropdowns()" class="block px-3 py-2 rounded-xl hover:bg-white/[0.05] transition group">
+              <p class="text-sm font-medium text-alabaster group-hover:text-sage transition">Computer Science &amp; Projects</p>
+              <p class="text-[11px] text-stone">Web tools, algorithms &amp; repositories</p>
+            </a>
+          </div>
+        </div>
+
+        <a href="#about" class="px-3.5 py-2 rounded-xl text-sm font-medium text-alabaster/90 hover:text-gold hover:bg-white/[0.04] transition">
+          About &amp; Archive
+        </a>
+
+        <button
+          type="button"
+          onclick="triggerBulkUpload()"
+          class="ml-1 px-3.5 py-2 rounded-xl text-xs font-semibold bg-gold/15 text-gold border border-gold/35 hover:bg-gold hover:text-gallery transition"
+        >
+          Load Photos
+        </button>
+      </nav>
+
+      <!-- Mobile Menu Button -->
+      <button
+        type="button"
+        onclick="toggleMobileDrawer()"
+        class="lg:hidden p-2.5 rounded-xl bg-surface border border-white/10 text-alabaster hover:border-gold/50 transition"
+        aria-label="Toggle Menu"
+      >
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Mobile Drawer -->
+    <div id="mobileDrawer" class="hidden lg:hidden bg-surface border-t border-white/10 px-4 py-4 space-y-4">
+      <div>
+        <p class="text-[10px] font-semibold uppercase tracking-widest text-gold mb-2">P-Tree Genres (33)</p>
+        <div class="grid grid-cols-2 gap-1.5 text-xs">
+          <button onclick="navigateToBranch('wildlife'); toggleMobileDrawer()" class="text-left px-3 py-2 rounded-xl bg-gallery text-alabaster hover:text-gold">Wildlife &amp; Avian (12)</button>
+          <button onclick="navigateToBranch('architecture'); toggleMobileDrawer()" class="text-left px-3 py-2 rounded-xl bg-gallery text-alabaster hover:text-gold">Architecture (9)</button>
+          <button onclick="navigateToBranch('lunar'); toggleMobileDrawer()" class="text-left px-3 py-2 rounded-xl bg-gallery text-alabaster hover:text-gold">Lunar &amp; Night (4)</button>
+          <button onclick="navigateToBranch('landscapes'); toggleMobileDrawer()" class="text-left px-3 py-2 rounded-xl bg-gallery text-alabaster hover:text-gold">Landscapes (4)</button>
+          <button onclick="navigateToBranch('people'); toggleMobileDrawer()" class="text-left px-3 py-2 rounded-xl bg-gallery text-alabaster hover:text-gold">People &amp; Life (2)</button>
+          <button onclick="navigateToBranch('macro'); toggleMobileDrawer()" class="text-left px-3 py-2 rounded-xl bg-gallery text-alabaster hover:text-gold">Natural History (2)</button>
+        </div>
+      </div>
+      <div class="pt-3 border-t border-white/10">
+        <p class="text-[10px] font-semibold uppercase tracking-widest text-sage mb-2">Disciplines &amp; Roadmap</p>
+        <div class="grid grid-cols-2 gap-1.5 text-xs">
+          <a href="#research" onclick="toggleMobileDrawer()" class="px-3 py-2 rounded-xl bg-gallery text-alabaster">Research</a>
+          <a href="#design" onclick="toggleMobileDrawer()" class="px-3 py-2 rounded-xl bg-gallery text-alabaster">Design &amp; UI/UX</a>
+          <a href="#writing" onclick="toggleMobileDrawer()" class="px-3 py-2 rounded-xl bg-gallery text-alabaster">Writing &amp; Essays</a>
+          <a href="#cs-projects" onclick="toggleMobileDrawer()" class="px-3 py-2 rounded-xl bg-gallery text-alabaster">Computer Science</a>
+        </div>
+      </div>
+      <div class="pt-2 border-t border-white/10 flex gap-2">
+        <button onclick="triggerBulkUpload(); toggleMobileDrawer()" class="flex-1 text-center py-2 rounded-xl bg-gold text-gallery text-xs font-semibold">Load Your Photos</button>
+        <a href="#p-tree" onclick="toggleMobileDrawer()" class="flex-1 text-center py-2 rounded-xl bg-white/5 text-alabaster text-xs font-medium">P-Tree Map</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="top">
+    <!-- ===================================================================== -->
+    <!-- EDITORIAL HERO WITH PORTRAIT & P-TREE ENTRY                           -->
+    <!-- ===================================================================== -->
+    <section class="relative pt-10 pb-14 sm:pt-16 sm:pb-20 border-b border-white/[0.08]">
+      <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_70%_25%,rgba(212,168,87,0.07),transparent_55%)]"></div>
+
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+          
+          <!-- Left 7 Columns: Editorial Statement -->
+          <div class="lg:col-span-7 space-y-6">
+            <div class="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-surface border border-white/10 text-xs text-stone">
+              <span class="w-2 h-2 rounded-full bg-gold"></span>
+              <span>Photography-Centered Multidisciplinary Portfolio</span>
+            </div>
+
+            <h1 class="font-serif text-4xl sm:text-6xl font-semibold tracking-tight text-alabaster leading-[1.06]">
+              Quiet Light, Honest Scale &amp; the <span class="text-gold italic">P-Tree</span> Archive.
+            </h1>
+
+            <p class="text-sm sm:text-base text-stone leading-relaxed max-w-2xl">
+              I am <strong class="text-alabaster font-medium">Md. Mahfuz Al Maruf</strong>, a photographer and student based in Rajshahi, Bangladesh. Under <span class="font-serif italic text-lg text-alabaster">Fleeting Time Machine</span>, my photography forms the rooted trunk of this portfolio—branching systematically into six visual canopies while leaving structured space for research, design, writing, and computer science.
+            </p>
+
+            <div class="flex flex-wrap items-center gap-3 pt-1">
+              <a href="#p-tree" class="px-5 py-3 rounded-xl bg-gold text-gallery font-semibold text-sm hover:bg-gold/90 transition shadow-lg shadow-gold/10">
+                Explore the P-Tree ↓
+              </a>
+              <button
+                type="button"
+                onclick="triggerBulkUpload()"
+                class="px-5 py-3 rounded-xl bg-surface border border-gold/40 text-alabaster hover:border-gold text-sm font-medium transition flex items-center gap-2"
+              >
+                <span>Load Your Photos</span>
+                <span id="heroMatchedPill" class="px-2 py-0.5 rounded-full text-[11px] bg-gallery text-gold border border-white/10">0 / 34</span>
+              </button>
+            </div>
+
+            <!-- Concise Archive Metrics -->
+            <div class="pt-4 grid grid-cols-3 gap-4 max-w-md border-t border-white/[0.08]">
+              <div>
+                <p class="font-serif text-2xl sm:text-3xl font-semibold text-alabaster">33</p>
+                <p class="text-[11px] uppercase tracking-wider text-stone">Curated Plates</p>
+              </div>
+              <div>
+                <p class="font-serif text-2xl sm:text-3xl font-semibold text-gold">06</p>
+                <p class="text-[11px] uppercase tracking-wider text-stone">Photo Canopies</p>
+              </div>
+              <div>
+                <p class="font-serif text-2xl sm:text-3xl font-semibold text-sage">04</p>
+                <p class="text-[11px] uppercase tracking-wider text-stone">Growth Branches</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right 5 Columns: Photographer Portrait Card -->
+          <div class="lg:col-span-5 flex justify-center lg:justify-end">
+            <div class="w-full max-w-sm bg-surface border border-white/10 rounded-3xl p-4 shadow-2xl group">
+              <div class="relative rounded-2xl overflow-hidden bg-gallery">
+                <img
+                  id="heroPortraitImg"
+                  data-photo-file="_MG_7118_edited (4).jpg"
+                  src="./_MG_7118_edited (4).jpg"
+                  alt="Portrait of Md. Mahfuz Al Maruf"
+                  class="w-full h-auto object-cover"
+                />
+                <button
+                  type="button"
+                  onclick="triggerSingleSlotUpload('_MG_7118_edited (4).jpg')"
+                  id="heroPortraitBadge"
+                  class="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-medium bg-gallery/85 text-gold border border-gold/40 hover:bg-gold hover:text-gallery backdrop-blur-sm transition"
+                >
+                  Attach Portrait
+                </button>
+                <div class="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-gallery/90 to-transparent pointer-events-none"></div>
+                <div class="absolute bottom-3.5 left-4 right-4 flex items-end justify-between pointer-events-none">
+                  <div>
+                    <p class="font-serif text-xl font-semibold text-alabaster leading-tight">Md. Mahfuz Al Maruf</p>
+                    <p class="text-xs text-gold">Rajshahi, Bangladesh</p>
+                  </div>
+                  <span class="px-2.5 py-1 rounded-full text-[10px] uppercase tracking-widest bg-gallery/85 text-stone border border-white/10 backdrop-blur-sm">
+                    35AWARDS ’25
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- INTERACTIVE P-TREE (PHOTOGRAPHY TREE) SECTION                         -->
+    <!-- ===================================================================== -->
+    <section id="p-tree" class="py-16 sm:py-24 border-b border-white/[0.08] bg-surface/35">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Section Header & Growth Mode Toggle -->
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+          <div>
+            <span class="text-xs font-semibold uppercase tracking-widest text-gold">Signature Architecture</span>
+            <h2 class="font-serif text-3xl sm:text-5xl font-semibold text-alabaster mt-1">
+              The P-Tree Canopy Map
+            </h2>
+            <p class="text-sm text-stone mt-2 max-w-2xl leading-relaxed">
+              Rather than scattered leaves, each photography genre forms a structured botanical bough rising from the central trunk. Select any canopy cluster to inspect its curatorial focus and filter the exhibition below.
+            </p>
+          </div>
+
+          <!-- Growth Mode Toggle -->
+          <div class="flex items-center gap-3 self-start md:self-auto">
+            <button
+              id="growthToggleBtn"
+              type="button"
+              onclick="toggleGrowthMode()"
+              class="px-4 py-2.5 rounded-xl bg-surface border border-sage/40 hover:border-sage text-xs sm:text-sm font-medium text-alabaster flex items-center gap-2.5 transition shadow-md"
+            >
+              <span id="growthIndicator" class="w-2.5 h-2.5 rounded-full bg-sage/40 transition-colors"></span>
+              <span id="growthLabel">Growth Mode: Full Portfolio</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Two-Column P-Tree Diagram + Active Canopy Inspector -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          
+          <!-- Left 7 Cols: Recognizable Architectural P-Tree SVG -->
+          <div class="lg:col-span-7 bg-surface border border-white/10 rounded-3xl p-4 sm:p-6 shadow-2xl">
+            <svg
+              viewBox="0 0 800 590"
+              class="w-full h-auto select-none"
+              role="img"
+              aria-label="Interactive P-Tree Diagram of Six Photography Genres"
+            >
+              <defs>
+                <linearGradient id="pTreeTrunk" x1="0%" y1="100%" x2="0%" y2="0%">
+                  <stop offset="0%" stop-color="#2b261f" />
+                  <stop offset="50%" stop-color="#6e5a3e" />
+                  <stop offset="100%" stop-color="#d4a857" />
+                </linearGradient>
+                <radialGradient id="canopyAura" cx="50%" cy="44%" r="50%">
+                  <stop offset="0%" stop-color="rgba(212, 168, 87, 0.11)" />
+                  <stop offset="65%" stop-color="rgba(127, 163, 139, 0.05)" />
+                  <stop offset="100%" stop-color="rgba(13, 15, 14, 0)" />
+                </radialGradient>
+              </defs>
+
+              <!-- Unified Botanical Crown Silhouette -->
+              <ellipse cx="400" cy="245" rx="345" ry="195" fill="url(#canopyAura)" />
+              <path
+                d="M 85 310 C 65 205, 175 68, 400 56 C 625 68, 735 205, 715 310 C 695 375, 575 388, 400 388 C 225 388, 105 375, 85 310 Z"
+                fill="rgba(255,255,255,0.015)"
+                stroke="rgba(255,255,255,0.06)"
+                stroke-width="1.2"
+                stroke-dasharray="5 6"
+              />
+
+              <!-- Ground Line & Root Flare -->
+              <line x1="170" y1="532" x2="630" y2="532" stroke="rgba(255,255,255,0.14)" stroke-width="1.5" stroke-linecap="round" />
+              <path d="M 342 532 Q 382 520 389 478 L 411 478 Q 418 520 458 532 Z" fill="#463A2B" />
+
+              <!-- Central Trunk: PHOTOGRAPHY -->
+              <path
+                d="M 389 532 C 391 460, 393 400, 400 325 C 407 400, 409 460, 411 532 Z"
+                fill="url(#pTreeTrunk)"
+              />
+              <rect x="305" y="542" width="190" height="28" rx="14" fill="#0d0f0e" stroke="rgba(212,168,87,0.5)" stroke-width="1.2" />
+              <text x="400" y="560" text-anchor="middle" fill="#d4a857" font-size="11" font-weight="600" letter-spacing="1.8">
+                PHOTOGRAPHY · TRUNK
+              </text>
+
+              <!-- 6 SYMMETRICAL STRUCTURAL BOUGHS -->
+              <path id="limb-people" class="tree-limb" d="M 397 415 C 325 395, 240 375, 175 340" fill="none" stroke="#4D4840" stroke-width="3.2" stroke-linecap="round" />
+              <path id="limb-macro" class="tree-limb" d="M 403 415 C 475 395, 560 375, 625 340" fill="none" stroke="#4D4840" stroke-width="3.2" stroke-linecap="round" />
+              <path id="limb-wildlife" class="tree-limb" d="M 398 370 C 315 330, 225 288, 160 232" fill="none" stroke="#4D4840" stroke-width="3.6" stroke-linecap="round" />
+              <path id="limb-architecture" class="tree-limb" d="M 402 370 C 485 330, 575 288, 640 232" fill="none" stroke="#4D4840" stroke-width="3.6" stroke-linecap="round" />
+              <path id="limb-lunar" class="tree-limb" d="M 399 335 C 350 265, 305 195, 272 128" fill="none" stroke="#4D4840" stroke-width="3.6" stroke-linecap="round" />
+              <path id="limb-landscapes" class="tree-limb" d="M 401 335 C 450 265, 495 195, 528 128" fill="none" stroke="#4D4840" stroke-width="3.6" stroke-linecap="round" />
+
+              <!-- CLUSTER 2: Landscapes & Atmosphere (4) -->
+              <g id="node-landscapes" class="canopy-node" onclick="selectCanopy('landscapes')">
+                <rect class="node-frame" x="426" y="84" width="224" height="68" rx="34" fill="#161918" stroke="rgba(127,163,139,0.45)" stroke-width="1.5" />
+                <text x="522" y="114" text-anchor="middle" fill="#f3f1ec" font-size="13.5" font-weight="600">Landscapes &amp; Mood</text>
+                <text x="522" y="133" text-anchor="middle" fill="#9a9890" font-size="10.5">Golden River &amp; Storm Rays</text>
+                <circle class="node-badge" cx="620" cy="118" r="15" fill="#212523" />
+                <text class="node-badge-text" x="620" y="122" text-anchor="middle" fill="#d4a857" font-size="11" font-weight="700">4</text>
+              </g>
+
+              <!-- CLUSTER 3: Wildlife & Avian (12) -->
+              <g id="node-wildlife" class="canopy-node" onclick="selectCanopy('wildlife')">
+                <rect class="node-frame" x="46" y="196" width="228" height="70" rx="35" fill="#161918" stroke="rgba(127,163,139,0.45)" stroke-width="1.5" />
+                <text x="144" y="227" text-anchor="middle" fill="#f3f1ec" font-size="13.5" font-weight="600">Wildlife &amp; Avian</text>
+                <text x="144" y="246" text-anchor="middle" fill="#9a9890" font-size="10.5">Birds, Nests &amp; Field Fauna</text>
+                <circle class="node-badge" cx="244" cy="231" r="15.5" fill="#212523" />
+                <text class="node-badge-text" x="244" y="235" text-anchor="middle" fill="#d4a857" font-size="11" font-weight="700">12</text>
+              </g>
+
+              <!-- CLUSTER 4: Architecture & Heritage (9) -->
+              <g id="node-architecture" class="canopy-node" onclick="selectCanopy('architecture')">
+                <rect class="node-frame" x="526" y="196" width="228" height="70" rx="35" fill="#161918" stroke="rgba(127,163,139,0.45)" stroke-width="1.5" />
+                <text x="624" y="227" text-anchor="middle" fill="#f3f1ec" font-size="13.5" font-weight="600">Architecture &amp; Heritage</text>
+                <text x="624" y="246" text-anchor="middle" fill="#9a9890" font-size="10.5">Palaces, Bridges &amp; Towers</text>
+                <circle class="node-badge" cx="724" cy="231" r="15.5" fill="#212523" />
+                <text class="node-badge-text" x="724" y="235" text-anchor="middle" fill="#d4a857" font-size="11" font-weight="700">9</text>
+              </g>
+
+              <!-- CLUSTER 1: Lunar & Night Sky (4) -->
+              <g id="node-lunar" class="canopy-node active" onclick="selectCanopy('lunar')">
+                <rect class="node-frame" x="150" y="84" width="224" height="68" rx="34" fill="#161918" stroke="rgba(127,163,139,0.45)" stroke-width="1.5" />
+                <text x="246" y="114" text-anchor="middle" fill="#f3f1ec" font-size="13.5" font-weight="600">Lunar &amp; Night Sky</text>
+                <text x="246" y="133" text-anchor="middle" fill="#9a9890" font-size="10.5">Crater Relief &amp; Supermoon</text>
+                <circle class="node-badge" cx="344" cy="118" r="15" fill="#212523" />
+                <text class="node-badge-text" x="344" y="122" text-anchor="middle" fill="#d4a857" font-size="11" font-weight="700">4</text>
+              </g>
+
+              <!-- CLUSTER 5: People & Everyday Life (2) -->
+              <g id="node-people" class="canopy-node" onclick="selectCanopy('people')">
+                <rect class="node-frame" x="74" y="308" width="222" height="66" rx="33" fill="#161918" stroke="rgba(127,163,139,0.45)" stroke-width="1.5" />
+                <text x="170" y="337" text-anchor="middle" fill="#f3f1ec" font-size="13.5" font-weight="600">People &amp; Everyday Life</text>
+                <text x="170" y="355" text-anchor="middle" fill="#9a9890" font-size="10.5">Harvest &amp; Street Documentary</text>
+                <circle class="node-badge" cx="268" cy="341" r="14.5" fill="#212523" />
+                <text class="node-badge-text" x="268" y="345" text-anchor="middle" fill="#d4a857" font-size="11" font-weight="700">2</text>
+              </g>
+
+              <!-- CLUSTER 6: Natural History & Macro (2) -->
+              <g id="node-macro" class="canopy-node" onclick="selectCanopy('macro')">
+                <rect class="node-frame" x="504" y="308" width="222" height="66" rx="33" fill="#161918" stroke="rgba(127,163,139,0.45)" stroke-width="1.5" />
+                <text x="600" y="337" text-anchor="middle" fill="#f3f1ec" font-size="13.5" font-weight="600">Natural History &amp; Macro</text>
+                <text x="600" y="355" text-anchor="middle" fill="#9a9890" font-size="10.5">Preserved Specimen Studies</text>
+                <circle class="node-badge" cx="698" cy="341" r="14.5" fill="#212523" />
+                <text class="node-badge-text" x="698" y="345" text-anchor="middle" fill="#d4a857" font-size="11" font-weight="700">2</text>
+              </g>
+            </svg>
+
+            <!-- Quick Accessible Canopy Pills -->
+            <div class="mt-3 pt-3 border-t border-white/[0.08] flex flex-wrap items-center justify-center gap-1.5">
+              <button onclick="selectCanopy('lunar')" data-canopy-pill="lunar" class="canopy-pill px-3 py-1 rounded-full text-xs font-medium bg-gold text-gallery transition">Lunar (4)</button>
+              <button onclick="selectCanopy('wildlife')" data-canopy-pill="wildlife" class="canopy-pill px-3 py-1 rounded-full text-xs font-medium bg-gallery text-stone hover:text-alabaster border border-white/10 transition">Wildlife (12)</button>
+              <button onclick="selectCanopy('architecture')" data-canopy-pill="architecture" class="canopy-pill px-3 py-1 rounded-full text-xs font-medium bg-gallery text-stone hover:text-alabaster border border-white/10 transition">Architecture (9)</button>
+              <button onclick="selectCanopy('landscapes')" data-canopy-pill="landscapes" class="canopy-pill px-3 py-1 rounded-full text-xs font-medium bg-gallery text-stone hover:text-alabaster border border-white/10 transition">Landscapes (4)</button>
+              <button onclick="selectCanopy('people')" data-canopy-pill="people" class="canopy-pill px-3 py-1 rounded-full text-xs font-medium bg-gallery text-stone hover:text-alabaster border border-white/10 transition">People (2)</button>
+              <button onclick="selectCanopy('macro')" data-canopy-pill="macro" class="canopy-pill px-3 py-1 rounded-full text-xs font-medium bg-gallery text-stone hover:text-alabaster border border-white/10 transition">Macro (2)</button>
+            </div>
+          </div>
+
+          <!-- Right 5 Cols: Active Canopy Cover & Curatorial Note -->
+          <div class="lg:col-span-5">
+            <div class="bg-surface border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
+              <div class="relative h-64 sm:h-72 bg-gallery overflow-hidden">
+                <img
+                  id="canopyCoverImg"
+                  data-photo-file="IMG_3279.jpg"
+                  src="./IMG_3279.jpg"
+                  alt="Canopy Cover Photograph"
+                  class="w-full h-full object-cover transition-all duration-500"
+                />
+                <div class="absolute inset-0 bg-gradient-to-t from-surface via-surface/25 to-transparent pointer-events-none"></div>
+                <span id="canopyTag" class="absolute top-4 left-4 px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-gallery/85 text-gold border border-gold/40 backdrop-blur-sm">
+                  Canopy Cover · 4 Plates
+                </span>
+                <div class="absolute bottom-4 left-5 right-5 pointer-events-none">
+                  <p id="canopySubtitle" class="text-[11px] uppercase tracking-widest text-gold font-medium">Lunar &amp; Night Sky</p>
+                  <h3 id="canopyTitle" class="font-serif text-2xl sm:text-3xl font-semibold text-alabaster leading-tight">
+                    Crisp Full Moon with Atmospheric Wisps
+                  </h3>
+                </div>
+              </div>
+
+              <div class="p-6 space-y-5">
+                <p id="canopyNote" class="text-sm text-stone leading-relaxed">
+                  Uncomposited lunar studies honoring true focal scale—anchored by IMG_3279.jpg showing crisp mare and crater detail through thin mist, alongside warm atmospheric haze, branch silhouettes, and the November 6 Supermoon.
+                </p>
+
+                <div id="canopyTagsList" class="flex flex-wrap gap-2 text-xs">
+                  <span class="px-2.5 py-1 rounded-lg bg-gallery border border-white/10 text-gold">Cover: IMG_3279.jpg</span>
+                  <span class="px-2.5 py-1 rounded-lg bg-gallery border border-white/10 text-alabaster/85">True Focal Scale</span>
+                  <span class="px-2.5 py-1 rounded-lg bg-gallery border border-white/10 text-alabaster/85">Zero Compositing</span>
+                </div>
+
+                <div class="pt-1 flex items-center gap-3">
+                  <button
+                    type="button"
+                    onclick="openSelectedCanopyInGallery()"
+                    class="w-full py-3 px-4 rounded-xl bg-gold text-gallery font-semibold text-sm hover:bg-gold/90 transition"
+                  >
+                    Filter Exhibition to This Canopy ↓
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- CURATED PHOTOGRAPHY GALLERY + STUDIO FILE LOADER TOOLBAR              -->
+    <!-- ===================================================================== -->
+    <section id="gallery" class="py-16 sm:py-24 border-b border-white/[0.08]">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <!-- Sleek Studio Photo Loader Toolbar (Auto-Matches & Saves in IndexedDB) -->
+        <div class="mb-10 bg-surface border border-gold/30 rounded-3xl p-4 sm:p-6 shadow-xl">
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div class="space-y-1">
+              <div class="flex items-center gap-2.5 flex-wrap">
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-widest bg-gold/15 text-gold border border-gold/35">
+                  Studio Photo Vault
+                </span>
+                <span id="vaultStatusBadge" class="text-xs font-medium text-alabaster">
+                  0 / 34 Local Originals Linked · Art-Directed Plates Active
+                </span>
+              </div>
+              <p class="text-xs text-stone leading-relaxed max-w-2xl">
+                Because browser previews cannot read folders on your drive automatically, select your photo files or folder once—every file is auto-matched by filename (including renamed variants) and saved in your browser across reloads.
+              </p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2.5 shrink-0">
+              <button
+                type="button"
+                onclick="triggerBulkUpload()"
+                class="px-4 py-2.5 rounded-xl bg-gold text-gallery font-semibold text-xs sm:text-sm hover:bg-gold/90 transition shadow-md"
+              >
+                Load Your Photos (Select Files)
+              </button>
+              <button
+                type="button"
+                onclick="triggerFolderUpload()"
+                class="px-4 py-2.5 rounded-xl bg-gallery border border-white/15 hover:border-gold/50 text-alabaster text-xs sm:text-sm font-medium transition"
+              >
+                Select Folder
+              </button>
+              <button
+                type="button"
+                id="clearVaultBtn"
+                onclick="clearSavedVault()"
+                class="hidden px-3.5 py-2.5 rounded-xl bg-gallery border border-white/10 hover:border-red-400/50 text-stone hover:text-red-300 text-xs font-medium transition"
+              >
+                Clear Saved Cache
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Gallery Header & Genre Filter Tabs -->
+        <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-10">
+          <div>
+            <span class="text-xs font-semibold uppercase tracking-widest text-gold">Complete Exhibition</span>
+            <h2 class="font-serif text-3xl sm:text-5xl font-semibold text-alabaster mt-1">
+              Selected Photographs
+            </h2>
+            <p class="text-sm text-stone mt-2 max-w-xl">
+              Preserving original vertical and horizontal aspect ratios without cropping. Click any plate for full-screen inspection or attach an individual file directly.
+            </p>
+          </div>
+
+          <!-- Filter Bar -->
+          <div class="flex flex-wrap gap-1.5" role="tablist" aria-label="Filter photographs by P-Tree canopy">
+            <button onclick="filterExhibition('all')" data-exhibit-filter="all" class="exhibit-filter-btn px-3.5 py-2 rounded-xl text-xs font-semibold bg-gold text-gallery transition">
+              All (33)
+            </button>
+            <button onclick="filterExhibition('wildlife')" data-exhibit-filter="wildlife" class="exhibit-filter-btn px-3.5 py-2 rounded-xl text-xs font-medium bg-surface text-stone hover:text-alabaster border border-white/10 transition">
+              Wildlife (12)
+            </button>
+            <button onclick="filterExhibition('architecture')" data-exhibit-filter="architecture" class="exhibit-filter-btn px-3.5 py-2 rounded-xl text-xs font-medium bg-surface text-stone hover:text-alabaster border border-white/10 transition">
+              Architecture (9)
+            </button>
+            <button onclick="filterExhibition('lunar')" data-exhibit-filter="lunar" class="exhibit-filter-btn px-3.5 py-2 rounded-xl text-xs font-medium bg-surface text-stone hover:text-alabaster border border-white/10 transition">
+              Lunar (4)
+            </button>
+            <button onclick="filterExhibition('landscapes')" data-exhibit-filter="landscapes" class="exhibit-filter-btn px-3.5 py-2 rounded-xl text-xs font-medium bg-surface text-stone hover:text-alabaster border border-white/10 transition">
+              Landscapes (4)
+            </button>
+            <button onclick="filterExhibition('people')" data-exhibit-filter="people" class="exhibit-filter-btn px-3.5 py-2 rounded-xl text-xs font-medium bg-surface text-stone hover:text-alabaster border border-white/10 transition">
+              People (2)
+            </button>
+            <button onclick="filterExhibition('macro')" data-exhibit-filter="macro" class="exhibit-filter-btn px-3.5 py-2 rounded-xl text-xs font-medium bg-surface text-stone hover:text-alabaster border border-white/10 transition">
+              Macro (2)
+            </button>
+          </div>
+        </div>
+
+        <!-- True-Aspect-Ratio Masonry Exhibition Grid -->
+        <div id="exhibitionGrid" class="masonry-grid">
+          <!-- Dynamically populated with all 33 photographs -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- MULTIDISCIPLINARY GROWTH SECTIONS (READY TO EXPAND)                   -->
+    <!-- ===================================================================== -->
+    <div class="bg-surface/30 border-b border-white/[0.08]">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 space-y-20">
+
+        <!-- 1. RESEARCH & PUBLICATIONS -->
+        <section id="research" class="scroll-mt-24">
+          <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+            <div>
+              <span class="text-xs font-semibold uppercase tracking-widest text-sage">Discipline 01 · Academic &amp; Field Inquiry</span>
+              <h2 class="font-serif text-3xl sm:text-4xl font-semibold text-alabaster mt-1">
+                Research &amp; Publications
+              </h2>
+            </div>
+            <span class="text-xs text-stone">1 Verified Entry · Expandable Archive</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Verified Public Entry -->
+            <article class="bg-surface border border-white/10 rounded-2xl p-6 flex flex-col justify-between space-y-4">
+              <div class="space-y-2.5">
+                <div class="flex items-center justify-between gap-2">
+                  <span class="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-sage/15 text-sage border border-sage/30">
+                    Published Abstract Book
+                  </span>
+                  <span class="text-xs text-stone">Rajshahi Collegiate School</span>
+                </div>
+                <h3 class="font-serif text-2xl font-semibold text-alabaster leading-snug">
+                  Co-Authored Research Abstract — RUEC Conference Proceedings
+                </h3>
+                <p class="text-sm text-stone leading-relaxed">
+                  Listed as a contributing co-author in the Rajshahi University Education Club (RUEC) Abstract Book, representing Rajshahi Collegiate School.
+                </p>
+              </div>
+              <div class="pt-3 border-t border-white/[0.06] flex items-center justify-between text-xs text-stone">
+                <span>Role: Co-Author</span>
+                <span class="text-alabaster/75">PDF / Citation Slot Ready</span>
+              </div>
+            </article>
+
+            <!-- Clean Expandable Slot -->
+            <div class="bg-gallery/60 border border-dashed border-white/15 rounded-2xl p-6 flex flex-col justify-between space-y-4">
+              <div class="space-y-2">
+                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-white/[0.04] text-stone border border-white/10">
+                  Upcoming Entry Slot
+                </span>
+                <h3 class="font-serif text-2xl font-semibold text-alabaster/70">
+                  Environmental &amp; Regional Research Paper
+                </h3>
+                <p class="text-sm text-stone/80 leading-relaxed">
+                  Reserved space for upcoming research manuscripts, methodology notes, datasets, and downloadable PDF preprints.
+                </p>
+              </div>
+              <div class="pt-3 border-t border-white/[0.06] text-xs text-stone/70">
+                Section ID: <code class="text-gold">#research</code> · Ready to populate
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. DESIGN & VISUAL IDENTITY -->
+        <section id="design" class="scroll-mt-24 pt-12 border-t border-white/[0.08]">
+          <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+            <div>
+              <span class="text-xs font-semibold uppercase tracking-widest text-sage">Discipline 02 · Systems &amp; Visual Craft</span>
+              <h2 class="font-serif text-3xl sm:text-4xl font-semibold text-alabaster mt-1">
+                Design &amp; Visual Identity
+              </h2>
+            </div>
+            <span class="text-xs text-stone">Structured Case-Study Slots</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-gallery/60 border border-dashed border-white/15 rounded-2xl p-6 space-y-2.5">
+              <span class="text-[11px] uppercase tracking-widest text-gold font-medium">Slot 01</span>
+              <h3 class="font-serif text-xl font-semibold text-alabaster/80">Brand Identity &amp; Marks</h3>
+              <p class="text-xs text-stone leading-relaxed">
+                Space reserved for logotypes, monograms, color systems, and visual guidelines.
+              </p>
+            </div>
+            <div class="bg-gallery/60 border border-dashed border-white/15 rounded-2xl p-6 space-y-2.5">
+              <span class="text-[11px] uppercase tracking-widest text-gold font-medium">Slot 02</span>
+              <h3 class="font-serif text-xl font-semibold text-alabaster/80">UI/UX &amp; Interface Systems</h3>
+              <p class="text-xs text-stone leading-relaxed">
+                Space reserved for Figma wireframes, interactive prototypes, and usability studies.
+              </p>
+            </div>
+            <div class="bg-gallery/60 border border-dashed border-white/15 rounded-2xl p-6 space-y-2.5">
+              <span class="text-[11px] uppercase tracking-widest text-gold font-medium">Slot 03</span>
+              <h3 class="font-serif text-xl font-semibold text-alabaster/80">Editorial &amp; Event Graphics</h3>
+              <p class="text-xs text-stone leading-relaxed">
+                Space reserved for posters, institutional publications, and event visual direction.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. WRITING & ESSAYS -->
+        <section id="writing" class="scroll-mt-24 pt-12 border-t border-white/[0.08]">
+          <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+            <div>
+              <span class="text-xs font-semibold uppercase tracking-widest text-sage">Discipline 03 · Prose &amp; Observation</span>
+              <h2 class="font-serif text-3xl sm:text-4xl font-semibold text-alabaster mt-1">
+                Writing &amp; Essays
+              </h2>
+            </div>
+            <span class="text-xs text-stone">Reading Room Ready</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-gallery/60 border border-dashed border-white/15 rounded-2xl p-6 flex items-start justify-between gap-4">
+              <div class="space-y-1.5">
+                <span class="text-[11px] uppercase tracking-widest text-stone">Essay Archive · Empty Slot</span>
+                <h3 class="font-serif text-2xl font-semibold text-alabaster/80">Personal Narrative Essays</h3>
+                <p class="text-xs text-stone leading-relaxed">
+                  Clean long-form reading layout prepared for reflective essays and creative nonfiction.
+                </p>
+              </div>
+              <span class="text-stone/50 font-serif text-2xl">01</span>
+            </div>
+
+            <div class="bg-gallery/60 border border-dashed border-white/15 rounded-2xl p-6 flex items-start justify-between gap-4">
+              <div class="space-y-1.5">
+                <span class="text-[11px] uppercase tracking-widest text-stone">Field Notes · Empty Slot</span>
+                <h3 class="font-serif text-2xl font-semibold text-alabaster/80">Photographic Field Notes</h3>
+                <p class="text-xs text-stone leading-relaxed">
+                  Stories behind light, patience, and documentary journeys across northern Bangladesh.
+                </p>
+              </div>
+              <span class="text-stone/50 font-serif text-2xl">02</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- 4. COMPUTER SCIENCE & PROJECTS -->
+        <section id="cs-projects" class="scroll-mt-24 pt-12 border-t border-white/[0.08]">
+          <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+            <div>
+              <span class="text-xs font-semibold uppercase tracking-widest text-sage">Discipline 04 · Engineering &amp; Code</span>
+              <h2 class="font-serif text-3xl sm:text-4xl font-semibold text-alabaster mt-1">
+                Computer Science &amp; Projects
+              </h2>
+            </div>
+            <span class="text-xs text-stone">Repository Cards Ready</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-gallery/60 border border-dashed border-white/15 rounded-2xl p-6 space-y-3">
+              <div class="flex items-center justify-between text-xs text-stone">
+                <span class="font-mono text-gold">~/projects/web-tools</span>
+                <span>Placeholder</span>
+              </div>
+              <h3 class="font-serif text-2xl font-semibold text-alabaster/80">Interactive Web &amp; Visual Tools</h3>
+              <p class="text-xs text-stone leading-relaxed">
+                Reserved for front-end applications, photography utilities, and live interactive builds with source links.
+              </p>
+            </div>
+
+            <div class="bg-gallery/60 border border-dashed border-white/15 rounded-2xl p-6 space-y-3">
+              <div class="flex items-center justify-between text-xs text-stone">
+                <span class="font-mono text-gold">~/projects/cs-foundations</span>
+                <span>Placeholder</span>
+              </div>
+              <h3 class="font-serif text-2xl font-semibold text-alabaster/80">Algorithms &amp; Academic Builds</h3>
+              <p class="text-xs text-stone leading-relaxed">
+                Reserved for data structures, problem-solving repositories, and undergraduate Computer Science coursework.
+              </p>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- ABOUT, VERIFIED RECOGNITION & SITE EXPANSION BLUEPRINT                -->
+    <!-- ===================================================================== -->
+    <section id="about" class="py-16 sm:py-24">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+          
+          <!-- Portrait Frame -->
+          <div class="lg:col-span-4">
+            <div class="relative bg-surface border border-white/10 rounded-3xl p-3.5 shadow-xl max-w-xs mx-auto lg:mx-0">
+              <img
+                id="aboutPortraitImg"
+                data-photo-file="_MG_7118_edited (4).jpg"
+                src="./_MG_7118_edited (4).jpg"
+                alt="Md. Mahfuz Al Maruf"
+                class="w-full h-auto rounded-2xl object-cover"
+              />
+              <button
+                type="button"
+                onclick="triggerSingleSlotUpload('_MG_7118_edited (4).jpg')"
+                id="aboutPortraitBadge"
+                class="mt-3 w-full py-2 rounded-xl bg-gallery border border-white/10 hover:border-gold/50 text-xs text-gold font-medium transition"
+              >
+                Attach Portrait (_MG_7118_edited (4).jpg)
+              </button>
+            </div>
+          </div>
+
+          <!-- Bio & Verified Recognitions -->
+          <div class="lg:col-span-8 space-y-6">
+            <span class="text-xs font-semibold uppercase tracking-widest text-gold">About &amp; Archive</span>
+            <h2 class="font-serif text-3xl sm:text-4xl font-semibold text-alabaster">
+              Md. Mahfuz Al Maruf
+            </h2>
+            <p class="text-sm sm:text-base text-alabaster/90 leading-relaxed">
+              Based in <strong class="text-gold font-medium">Rajshahi, Bangladesh</strong> and an alumnus of <strong class="text-alabaster font-medium">Rajshahi Collegiate School</strong>, I document wildlife, historic architecture, lunar phases, and everyday human moments under <span class="font-serif italic text-lg">Fleeting Time Machine</span>.
+            </p>
+            <p class="text-sm text-stone leading-relaxed">
+              My visual approach favors natural color grading, unmanipulated astronomical scale, and quiet atmospheric restraint—letting subjects speak with clarity before layering in future academic, design, and software work.
+            </p>
+
+            <!-- Verified Public Recognition Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+              <a
+                href="https://35awards.com/gallery/photo/12231797/"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="p-4 rounded-2xl bg-surface border border-white/10 hover:border-gold/50 transition group"
+              >
+                <p class="text-[11px] uppercase tracking-wider text-gold font-semibold">35AWARDS · 2025 ↗</p>
+                <p class="text-sm font-medium text-alabaster mt-1 group-hover:text-gold transition">10th Edition Catalogue</p>
+                <p class="text-xs text-stone mt-1">Featured entry: “Bond of Life”</p>
+              </a>
+
+              <a
+                href="https://commons.wikimedia.org/wiki/Commons:Wiki_Loves_Folklore_2025_in_Bangladesh"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="p-4 rounded-2xl bg-surface border border-white/10 hover:border-sage/50 transition group"
+              >
+                <p class="text-[11px] uppercase tracking-wider text-sage font-semibold">Wikimedia Commons ↗</p>
+                <p class="text-sm font-medium text-alabaster mt-1 group-hover:text-sage transition">Wiki Loves Folklore BD</p>
+                <p class="text-xs text-stone mt-1">Cultural &amp; heritage contributor</p>
+              </a>
+
+              <div class="p-4 rounded-2xl bg-surface border border-white/10">
+                <p class="text-[11px] uppercase tracking-wider text-alabaster/70 font-semibold">RUEC Abstract Book</p>
+                <p class="text-sm font-medium text-alabaster mt-1">Co-Authored Abstract</p>
+                <p class="text-xs text-stone mt-1">Rajshahi Collegiate School</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Collapsible Site Expansion Blueprint Drawer -->
+        <div class="bg-surface border border-white/10 rounded-2xl overflow-hidden">
+          <button
+            type="button"
+            onclick="toggleBlueprintDrawer()"
+            class="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-white/[0.02] transition"
+          >
+            <div class="flex items-center gap-3">
+              <span class="w-2 h-2 rounded-full bg-sage"></span>
+              <span class="text-xs sm:text-sm font-medium text-alabaster">Hosting &amp; Site Expansion Blueprint — Deploying Your Site Live</span>
+            </div>
+            <span id="blueprintChevron" class="text-xs text-gold font-medium">Show Guide +</span>
+          </button>
+
+          <div id="blueprintContent" class="hidden px-6 pb-6 pt-2 border-t border-white/[0.08] grid grid-cols-1 md:grid-cols-3 gap-5 text-xs text-stone leading-relaxed">
+            <div class="p-4 rounded-xl bg-gallery border border-white/[0.06]">
+              <p class="text-alabaster font-semibold mb-1">1. Instant Hosting (Zero Code Edits)</p>
+              <p>Place <code class="text-gold">index.html</code> in the same folder as your 34 image files (or inside a <code class="text-sage">photos/</code> subfolder) and deploy to GitHub Pages, Netlify, or Vercel—all relative filenames and variant names resolve automatically.</p>
+            </div>
+            <div class="p-4 rounded-xl bg-gallery border border-white/[0.06]">
+              <p class="text-alabaster font-semibold mb-1">2. Populating Research &amp; Essays</p>
+              <p>Replace the dashed placeholder cards inside <code class="text-gold">#research</code> and <code class="text-gold">#writing</code> with standard <code class="text-alabaster">&lt;article&gt;</code> cards linking to your PDFs or full-text essays.</p>
+            </div>
+            <div class="p-4 rounded-xl bg-gallery border border-white/[0.06]">
+              <p class="text-alabaster font-semibold mb-1">3. Adding Design &amp; CS Projects</p>
+              <p>Update the cards in <code class="text-gold">#design</code> and <code class="text-gold">#cs-projects</code> with Figma embeds, screenshots, and GitHub links—already wired to the top <strong class="text-alabaster">Disciplines</strong> dropdown and P-Tree <strong class="text-sage">Growth Mode</strong>.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===================================================================== -->
+  <!-- FOOTER                                                                -->
+  <!-- ===================================================================== -->
+  <footer class="border-t border-white/[0.08] py-10 bg-gallery">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-stone">
+      <div>
+        <span class="font-serif text-base text-alabaster font-semibold">Md. Mahfuz Al Maruf</span>
+        <span class="mx-2 text-white/20">·</span>
+        <span>Fleeting Time Machine · Rajshahi, Bangladesh</span>
+      </div>
+      <div class="flex items-center gap-5">
+        <a href="#top" class="hover:text-gold transition">Top ↑</a>
+        <a href="#p-tree" class="hover:text-gold transition">P-Tree</a>
+        <a href="#gallery" class="hover:text-gold transition">Exhibition (33)</a>
+        <a href="#about" class="hover:text-gold transition">Archive</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ===================================================================== -->
+  <!-- FULL-SCREEN EXHIBITION LIGHTBOX (KEYBOARD + ZOOM/FIT SUPPORT)         -->
+  <!-- ===================================================================== -->
+  <div
+    id="lightboxModal"
+    class="fixed inset-0 z-50 hidden bg-gallery/95 backdrop-blur-xl flex flex-col justify-between p-4 sm:p-6"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="lbTitle"
+  >
+    <!-- Top Lightbox Bar -->
+    <div class="max-w-6xl w-full mx-auto flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <span id="lbCounter" class="text-xs font-mono text-gold">01 / 33</span>
+        <span class="text-white/20">|</span>
+        <span id="lbBranchTag" class="text-xs uppercase tracking-widest text-stone">Lunar &amp; Night Sky</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          onclick="attachPhotoFromLightbox()"
+          class="px-3 py-1.5 rounded-xl bg-gold/15 border border-gold/40 text-xs text-gold hover:bg-gold hover:text-gallery transition"
+        >
+          Attach File
+        </button>
+        <button
+          id="lbZoomBtn"
+          type="button"
+          onclick="toggleLightboxZoom()"
+          class="px-3 py-1.5 rounded-xl bg-surface border border-white/10 text-xs text-alabaster hover:border-gold/50 transition"
+        >
+          Zoom: Fit
+        </button>
+        <button
+          type="button"
+          onclick="closeLightbox()"
+          class="px-3 py-1.5 rounded-xl bg-surface border border-white/10 text-xs text-alabaster hover:border-gold/50 transition"
+          aria-label="Close Lightbox"
+        >
+          Close ✕
+        </button>
+      </div>
+    </div>
+
+    <!-- Center Image Stage with Prev/Next Controls -->
+    <div class="relative flex-1 flex items-center justify-center my-4 overflow-auto">
+      <button
+        type="button"
+        onclick="stepLightbox(-1)"
+        class="hidden sm:flex absolute left-2 z-10 w-11 h-11 rounded-full bg-surface/90 border border-white/15 text-alabaster hover:border-gold hover:text-gold items-center justify-center transition shadow-xl"
+        aria-label="Previous Photograph"
+      >
+        ←
+      </button>
+
+      <img
+        id="lbImg"
+        src=""
+        alt=""
+        onclick="toggleLightboxZoom()"
+        class="max-h-[70vh] w-auto object-contain rounded-xl shadow-2xl cursor-zoom-in transition-all duration-300"
+      />
+
+      <button
+        type="button"
+        onclick="stepLightbox(1)"
+        class="hidden sm:flex absolute right-2 z-10 w-11 h-11 rounded-full bg-surface/90 border border-white/15 text-alabaster hover:border-gold hover:text-gold items-center justify-center transition shadow-xl"
+        aria-label="Next Photograph"
+      >
+        →
+      </button>
+    </div>
+
+    <!-- Bottom Caption & Mobile Navigation -->
+    <div class="max-w-4xl w-full mx-auto bg-surface/90 border border-white/10 rounded-2xl px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2.5 flex-wrap">
+          <h3 id="lbTitle" class="font-serif text-xl sm:text-2xl font-semibold text-alabaster">Title</h3>
+          <span id="lbCoverBadge" class="hidden px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-gold/20 text-gold border border-gold/40">
+            Branch Cover
+          </span>
+          <span id="lbFilenameTag" class="text-[11px] font-mono text-stone">IMG_3279.jpg</span>
+        </div>
+        <p id="lbCaption" class="text-xs sm:text-sm text-stone mt-0.5">Subtitle and notes</p>
+      </div>
+
+      <div class="flex items-center gap-2 self-end sm:self-center">
+        <a
+          id="lbExternalUrl"
+          href="#"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="hidden px-3 py-1.5 rounded-xl bg-gallery border border-gold/40 text-xs text-gold hover:bg-gold/10 transition"
+        >
+          35AWARDS ↗
+        </a>
+        <button type="button" onclick="stepLightbox(-1)" class="sm:hidden px-3 py-1.5 rounded-xl bg-gallery border border-white/10 text-xs text-alabaster">← Prev</button>
+        <button type="button" onclick="stepLightbox(1)" class="sm:hidden px-3 py-1.5 rounded-xl bg-gallery border border-white/10 text-xs text-alabaster">Next →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- PORTFOLIO DATA, ART-DIRECTED SVG PLATES & INDEXEDDB PHOTO VAULT       -->
+  <!-- ===================================================================== -->
+  <script>
+    // -----------------------------------------------------------------------
+    // 1. SIX P-TREE CANOPY DEFINITIONS (EXACT COUNTS: 4, 12, 9, 4, 2, 2 = 33)
+    // -----------------------------------------------------------------------
+    const CANOPIES = {
+      lunar: {
+        id: 'lunar',
+        label: 'Lunar & Night Sky',
+        count: 4,
+        coverFile: 'IMG_3279.jpg',
+        coverTitle: 'Crisp Full Moon with Atmospheric Wisps',
+        note: 'Uncomposited lunar studies honoring true focal scale—anchored by IMG_3279.jpg showing crisp mare and crater detail through thin mist, alongside warm atmospheric haze, branch silhouettes, and the November 6 Supermoon.',
+        tags: ['Cover: IMG_3279.jpg', 'True Focal Scale', 'Zero Compositing'],
+      },
+      wildlife: {
+        id: 'wildlife',
+        label: 'Wildlife & Avian',
+        count: 12,
+        coverFile: 'IMG_2783.jpg',
+        coverTitle: 'Asian Pied Starling Above Nest',
+        note: 'Patient natural-light observations of avian behavior and local fauna across Rajshahi—including the 35AWARDS 2025 catalogued frame “Bond of Life”, nesting starlings, terracotta-pot pigeons, egrets in green paddy, ruddy shelducks, and quiet mammals.',
+        tags: ['12 Curated Plates', '35AWARDS ’25 Featured', 'Natural Color Grading'],
+      },
+      architecture: {
+        id: 'architecture',
+        label: 'Architecture & Heritage',
+        count: 9,
+        coverFile: 'IMG_0626.jpg',
+        coverTitle: 'Weathered Brick Archway & Sunburst Pediment',
+        note: 'Structural rhythm across eras—from fluted columns, cast-iron latticework, and weathered brickwork of historic Rajbari palaces to sweeping Padma river bridge piers, railway lines, industrial cooling towers, and twilight bamboo scaffolding.',
+        tags: ['9 Curated Plates', 'Heritage & Infrastructure', 'Light & Shadow Geometry'],
+      },
+      landscapes: {
+        id: 'landscapes',
+        label: 'Landscapes & Atmosphere',
+        count: 4,
+        coverFile: 'IMG_3586.jpg',
+        coverTitle: 'Golden Dusk Crossing',
+        note: 'Transient atmospheric moments—wide and telephoto studies of wooden boats crossing molten sunset reflections on the river alongside crepuscular sunbeams breaking through dark storm clouds.',
+        tags: ['4 Curated Plates', 'Golden Hour & Storm Light', 'Atmospheric Contrast'],
+      },
+      people: {
+        id: 'people',
+        label: 'People & Everyday Life',
+        count: 2,
+        coverFile: 'IMG_5284.jpg',
+        coverTitle: 'Street Vendor with Traditional Baank Yoke',
+        note: 'Unposed documentary frames of daily labor and dignity—rural hands working deep inside lush green paddy fields and a street vendor carrying a traditional bamboo shoulder yoke through Rajshahi.',
+        tags: ['2 Curated Plates', 'Candid Documentary', 'Rajshahi & Barind'],
+      },
+      macro: {
+        id: 'macro',
+        label: 'Natural History & Macro',
+        count: 2,
+        coverFile: '_MG_3037.jpg',
+        coverTitle: 'Preserved Lizard Specimen Study',
+        note: 'Close-range studies of preserved herpetological specimens—exploring intricate scale geometry, amber fluid refraction, and scientific quietude.',
+        tags: ['2 Curated Plates', 'Close-Range Texture', 'Natural History'],
+      },
+    };
+
+    // -----------------------------------------------------------------------
+    // 2. COMPLETE 33-PHOTOGRAPH ARCHIVE + PORTRAIT METADATA (WITH ALT-FILENAMES)
+    // -----------------------------------------------------------------------
+    const PHOTO_ARCHIVE = [
+      // --- LUNAR & NIGHT SKY (4 — IMG_3279.jpg Cover) ---
+      {
+        file: 'IMG_3279.jpg',
+        branch: 'lunar',
+        branchName: 'Lunar & Night Sky',
+        title: 'Crisp Full Moon with Atmospheric Wisps',
+        subtitle: 'Lunar Canopy Cover · Crater & Mare Relief',
+        note: 'Selected as the cover plate for the Lunar & Night Sky canopy—capturing crisp lunar mare contrast and Tycho ray patterns surrounded by subtle atmospheric wisps.',
+        isCover: true,
+        aspect: [16, 9],
+        palette: ['#0b0d0e', '#232524', '#e5dec9'],
+        motif: 'lunar-crisp',
+      },
+      {
+        file: 'IMG_2120_edited(1).jpg',
+        branch: 'lunar',
+        branchName: 'Lunar & Night Sky',
+        title: 'Amber Full Moon Halo',
+        subtitle: 'Warm Full Moon in Atmospheric Haze',
+        note: 'Low-altitude atmospheric scattering bathing the lunar disc in a warm amber-gold corona.',
+        isCover: false,
+        aspect: [3, 2],
+        palette: ['#18120c', '#45301a', '#e8b96a'],
+        motif: 'lunar-amber',
+      },
+      {
+        file: 'MD MAHFUZ AL MARUF (5) (2).jpg',
+        branch: 'lunar',
+        branchName: 'Lunar & Night Sky',
+        title: 'Nocturne Moon Through Branches',
+        subtitle: 'Monochrome Silhouette Study',
+        note: 'High-contrast black-and-white study framing a luminous moon behind dark foreground tree limbs.',
+        isCover: false,
+        aspect: [3, 2],
+        palette: ['#090a0a', '#1d201f', '#f3f1ec'],
+        motif: 'lunar-branches',
+      },
+      {
+        file: 'Supermoon 6Nov.jpg',
+        branch: 'lunar',
+        branchName: 'Lunar & Night Sky',
+        title: 'November 6 Supermoon Veiled in Cloud',
+        subtitle: 'Full Moon Emerging Through Night Cloud',
+        note: 'Photographed on November 6 as translucent cloud banks drifted across the glowing supermoon.',
+        isCover: false,
+        aspect: [3, 2],
+        palette: ['#0f1112', '#353a3d', '#dce1e5'],
+        motif: 'lunar-cloud',
+      },
+
+      // --- WILDLIFE & AVIAN (12) ---
+      {
+        file: 'IMG_2783.jpg',
+        branch: 'wildlife',
+        branchName: 'Wildlife & Avian',
+        title: 'Asian Pied Starling Above Nest',
+        subtitle: 'Avian Canopy Study',
+        note: 'Perched directly above its intricately woven nest amidst sunlit foliage.',
+        isCover: false,
+        aspect: [3, 2],
+        palette: ['#131c14', '#3d5e37', '#a8c67d'],
+        motif: 'bird-nest',
+      },
+      {
+        file: 'IMG_2890 (1)..1.jpg',
+        branch: 'wildlife',
+        branchName: 'Wildlife & Avian',
+        title: 'Starling Guardian on Branch',
+        subtitle: 'Vertical Nesting & Foliage Study',
+        note: 'An Asian Pied Starling standing alert beside its woven twig nest framed by lush sunlit leaves.',
+        isCover: false,
+        aspect: [2, 3],
+        palette: ['#151e12', '#476838', '#e2b66d'],
+        motif: 'bird-nest',
+      },
+      {
+        file: 'IMG_9660.jpg',
+        branch: 'wildlife',
+        branchName: 'Wildlife & Avian',
+        title: 'Pigeon in Clay Nesting Pot',
+        subtitle: 'Rural Courtyard Avian Study',
+        note: 'Warm natural-light portrait of a white-necked pigeon perched at the rim of a hanging terracotta nesting pot.',
+        isCover: false,
+        aspect: [3, 2],
+        palette: ['#241a13', '#7c5338', '#e3d5c3'],
+        motif: 'bird-nest',
+      },
+      {
+        file: '_MG_8603.jpg',
+        branch: 'wildlife',
+        branchName: 'Wildlife & Avian',
+        title: 'Juvenile Spotted Doves',
+        subtitle: '“Bond of Life” · 10th 35AWARDS Catalogue (2025)',
+        note: 'Two young spotted doves resting side by side on a branch—featured in the 10th 35AWARDS International Photography Catalogue (2025).',
+        isCover: false,
+        externalUrl: 'https://35awards.com/gallery/photo/12231797/',
+        aspect: [3, 2],
+        palette: ['#161c13', '#495a36', '#c5b18c'],
+        motif: 'twin-doves',
+      },
+      {
+        file: 'i (2).jpg',
+        branch: 'wildlife',
+        branchName: 'Wildlife & Avian',
+        title: 'Indian Palm Squirrel on Bark',
+        subtitle: 'Mammal & Canopy Detail',
+        note: 'Alert posture and fine fur detail isolated against a clean, soft-focus green backdrop.',
+        isCover: false,
+        aspect: [2, 3],
+        palette: ['#1a2114', '#566d38', '#b89f7d'],
+        motif: 'squirrel',
+      },
+      {
+        file: '_MG_0099 (2).jpg',
+        branch: 'wildlife',
+        branchName: 'Wildlife & Avian',
+        title: 'Alley Tabby by Moss Wall',
+        subtitle: 'Subdued Light Study',
+        note: 'Quiet ambient light against weathered, moss-stained plaster and dry autumn leaves.',
+        isCover: false,
+        aspect: [3, 2],
+        palette: ['#1a1811', '#4a452d', '#b8ad82'],
+        motif: 'cat',
+      },
+      {
+        file: '_MG_2758_edited.jpg',
+        branch: 'wildlife',
+        branchName: 'Wildlife & Avian',
+        title: 'Solitary Cattle Egret in Green Paddy',
+        subtitle: 'Wetland & Crop Field Avian',
+        note: 'White plumage standing crisp against saturated crop greens under a soft morning haze.',
+        isCover: false,
+        aspect: [16, 9],
+        palette: ['#162116', '#4a733b', '#f3f1ec'],
+        motif: 'egret-single',
+      },
+      {
+        file: '_MG_2765_edited.jpg',
+        branch: 'wildlife',
+        branchName: 'Wildlife & Avian',
+        title: 'Pair of Cattle Egrets in Field',
+        subtitle: 'Layered Field Depth',
+        note: 'Shallow depth of field pairing a sharp foreground egret with its companion beyond.',
+        isCover: false,
+        aspect: [9, 16],
+        palette: ['#162116', '#4a733b', '#f3f1ec'],
+        motif: 'egret-pair',
+      },
+      {
+        file: '_MG_2309.jpg',
+        branch: 'wildlife',
+        branchName: 'Wildlife & Avian',
+        title: 'Ruddy Shelduck on Emerald Water',
+        subtitle: 'Waterfowl & Ripples',
+        note: 'Warm cinnamon plumage contrasting with deep emerald ripples and fallen leaves.',
+        isCover: false,
+        aspect: [16, 9],
+        palette: ['#0f1c16', '#214232', '#d48642'],
+        motif: 'duck-water',
+      },
+      {
+        file: '_MG_2322.jpg',
+        branch: 'wildlife',
+        branchName: 'Wildlife & Avian',
+        title: 'Ruddy Shelducks on Bamboo Perch',
+        subtitle: 'Balance Over Still Water',
+        note: 'Two ruddy shelducks poised along weathered bamboo poles above still pond water.',
+        isCover: false,
+        aspect: [16, 9],
+        palette: ['#0f1c16', '#264435', '#d48642'],
+        motif: 'duck-bamboo',
+      },
+      {
+        file: '_MG_0925 (1).jpg',
+        branch: 'wildlife',
+        branchName: 'Wildlife & Avian',
+        title: 'Emerald Budgerigar Preening',
+        subtitle: 'Shaft of Canopy Light',
+        note: 'A single shaft of canopy light illuminating vibrant green feathers in deep woodland shadow.',
+        isCover: false,
+        aspect: [4, 3],
+        palette: ['#09120a', '#1d4d20', '#7ed448'],
+        motif: 'budgie',
+      },
+      {
+        file: 'IMG_20240412_212154_342 (1).jpg',
+        altFiles: ['IMG_20240412_212154_342 (1)_2.jpg'],
+        branch: 'wildlife',
+        branchName: 'Wildlife & Avian',
+        title: 'Black-Crowned Night Heron in Canopy',
+        subtitle: 'High-Key Overcast Study',
+        note: 'Framed within sweeping tree limbs against an overcast, high-key sky.',
+        isCover: false,
+        aspect: [1, 1],
+        palette: ['#1f221e', '#6f7c68', '#e5e7e2'],
+        motif: 'heron',
+      },
+
+      // --- ARCHITECTURE & HERITAGE (9) ---
+      {
+        file: '_MG_3480.jpg',
+        branch: 'architecture',
+        branchName: 'Architecture & Heritage',
+        title: 'Sweeping River Bridge Piers',
+        subtitle: 'Infrastructure & Perspective',
+        note: 'Receding perspective of massive river piers and railway bridge spans fading into river mist.',
+        isCover: false,
+        aspect: [3, 2],
+        palette: ['#15181a', '#434b50', '#b8bfc4'],
+        motif: 'bridge',
+      },
+      {
+        file: '_MG_8290.jpg',
+        branch: 'architecture',
+        branchName: 'Architecture & Heritage',
+        title: 'Bangladesh Railway Carriages',
+        subtitle: 'Trackside Geometry & Color',
+        note: 'Geometric framing of classic red-and-green passenger coaches behind weathered freight rolling stock.',
+        isCover: false,
+        aspect: [3, 2],
+        palette: ['#111916', '#1e5c3a', '#c9463d'],
+        motif: 'railway',
+      },
+      {
+        file: '_MG_7988.jpg',
+        branch: 'architecture',
+        branchName: 'Architecture & Heritage',
+        title: 'Chiaroscuro Street Corner Bulbs',
+        subtitle: 'Nocturnal Light & Shadow',
+        note: 'Stark pools of tungsten light carving concrete eaves out of deep night shadow.',
+        isCover: false,
+        aspect: [3, 2],
+        palette: ['#090909', '#2b2823', '#f5e8c8'],
+        motif: 'night-bulbs',
+      },
+      {
+        file: 'IMG_4695.jpg',
+        branch: 'architecture',
+        branchName: 'Architecture & Heritage',
+        title: 'Twilight Scaffolding & Setting Sun',
+        subtitle: 'Bamboo Formwork & Horizon Silhouette',
+        note: 'Diagonal bamboo scaffolding poles and concrete lintels framing the glowing setting sun in warm amber dusk.',
+        isCover: false,
+        aspect: [16, 9],
+        palette: ['#1c110b', '#754129', '#ffcf75'],
+        motif: 'rebar-sunset',
+      },
+      {
+        file: 'IMG_4702.jpg',
+        branch: 'architecture',
+        branchName: 'Architecture & Heritage',
+        title: 'Construction Rebar Sunset Silhouette',
+        subtitle: 'Urban Horizon Geometry',
+        note: 'Minimalist silhouette of vertical rebar, scaffolding poles, and a setting sun in warm twilight.',
+        isCover: false,
+        aspect: [9, 16],
+        palette: ['#17100c', '#6e3d28', '#f2a65a'],
+        motif: 'rebar-sunset',
+      },
+      {
+        file: 'IMG_0604.jpg',
+        branch: 'architecture',
+        branchName: 'Architecture & Heritage',
+        title: 'Rajbari Fluted Columns & Courtyard',
+        subtitle: 'Classical Heritage Veranda',
+        note: 'Monumental classical columns overlooking an open palace lawn and distant temple spires.',
+        isCover: false,
+        aspect: [3, 4],
+        palette: ['#1a1917', '#6c6358', '#d8cbb8'],
+        motif: 'palace-columns',
+      },
+      {
+        file: 'IMG_0626.jpg',
+        branch: 'architecture',
+        branchName: 'Architecture & Heritage',
+        title: 'Weathered Brick Archway & Sunburst Pediment',
+        subtitle: 'Heritage Palace Facade',
+        note: 'Upward perspective highlighting exposed historic brickwork, fluted pilasters, and a sculpted sunburst arch.',
+        isCover: false,
+        aspect: [3, 4],
+        palette: ['#1c1410', '#7c4b34', '#d9b58c'],
+        motif: 'brick-arch',
+      },
+      {
+        file: 'IMG_0617.jpg',
+        branch: 'architecture',
+        branchName: 'Architecture & Heritage',
+        title: 'Cast-Iron Palace Veranda Lattice',
+        subtitle: 'Colonial Ironwork & Afternoon Light',
+        note: 'Intricate ironwork, stained-glass fanlights, and warm late-afternoon light spilling across the veranda floor.',
+        isCover: false,
+        aspect: [3, 4],
+        palette: ['#171615', '#524d47', '#cfc6b8'],
+        motif: 'iron-lattice',
+      },
+      {
+        file: '_MG_8364.jpg',
+        branch: 'architecture',
+        branchName: 'Architecture & Heritage',
+        title: 'Monumental Cooling Towers Under Storm Clouds',
+        subtitle: 'Industrial Scale & Monsoon Sky',
+        note: 'Three hyperboloid towers rising behind dense green canopy and transmission lines beneath heavy monsoon clouds.',
+        isCover: false,
+        aspect: [3, 2],
+        palette: ['#141a20', '#415364', '#c5c7c2'],
+        motif: 'cooling-towers',
+      },
+
+      // --- LANDSCAPES & ATMOSPHERE (4) ---
+      {
+        file: 'IMG_3586.jpg',
+        branch: 'landscapes',
+        branchName: 'Landscapes & Atmosphere',
+        title: 'Golden Dusk Crossing',
+        subtitle: 'Vertical River Horizon & Sun Pillar',
+        note: 'A wide vertical vista capturing the setting sun and its molten reflection path across calm river water as a wooden boat glides past the bank.',
+        isCover: false,
+        aspect: [2, 3],
+        palette: ['#241507', '#9c5616', '#ffd269'],
+        motif: 'river-sunset',
+      },
+      {
+        file: 'IMG_3589.jpg',
+        branch: 'landscapes',
+        branchName: 'Landscapes & Atmosphere',
+        title: 'Ripples of Molten Gold',
+        subtitle: 'Telephoto River Crossing Study',
+        note: 'Tighter telephoto compression isolating two boatmen rowing across shimmering golden sun-glint ripples along the dark shoreline.',
+        isCover: false,
+        aspect: [3, 2],
+        palette: ['#211306', '#9e5412', '#ffcf5c'],
+        motif: 'river-sunset',
+      },
+      {
+        file: 'IMG_3381.jpg',
+        branch: 'landscapes',
+        branchName: 'Landscapes & Atmosphere',
+        title: 'Golden River Crossing at Dusk',
+        subtitle: 'Molten Sunset Reflections',
+        note: 'A small wooden boat cutting through shimmering golden reflections at dusk.',
+        isCover: false,
+        aspect: [2, 3],
+        palette: ['#1f1308', '#8a4b14', '#f5b841'],
+        motif: 'river-sunset',
+      },
+      {
+        file: 'IMG_4014_edited.jpg',
+        altFiles: ['IMG_4014_edited_2.jpg'],
+        branch: 'landscapes',
+        branchName: 'Landscapes & Atmosphere',
+        title: 'Crepuscular Rays & Soaring Bird',
+        subtitle: 'Storm Cloud Drama',
+        note: 'God-rays fanning through a narrow rift in dark thunderclouds as a lone bird glides overhead.',
+        isCover: false,
+        aspect: [3, 2],
+        palette: ['#111316', '#3a414a', '#e0c084'],
+        motif: 'storm-rays',
+      },
+
+      // --- PEOPLE & EVERYDAY LIFE (2) ---
+      {
+        file: '_MG_8085.jpg',
+        branch: 'people',
+        branchName: 'People & Everyday Life',
+        title: 'Tending the Monsoon Paddy',
+        subtitle: 'Rural Harvest Documentary',
+        note: 'Farmers immersed waist-deep in vibrant green paddy blades during field cultivation.',
+        isCover: false,
+        aspect: [3, 2],
+        palette: ['#131e12', '#3d6b2c', '#98c468'],
+        motif: 'paddy-workers',
+      },
+      {
+        file: 'IMG_5284.jpg',
+        altFiles: ['IMG_5284_2.jpg'],
+        branch: 'people',
+        branchName: 'People & Everyday Life',
+        title: 'Street Vendor with Traditional Baank Yoke',
+        subtitle: 'Morning Street Documentary · Rajshahi',
+        note: 'A vendor balancing a traditional bamboo shoulder yoke along a quiet morning street.',
+        isCover: false,
+        aspect: [3, 2],
+        palette: ['#18191a', '#4f5459', '#c96a58'],
+        motif: 'street-baank',
+      },
+
+      // --- NATURAL HISTORY & MACRO (2) ---
+      {
+        file: '_MG_3037.jpg',
+        branch: 'macro',
+        branchName: 'Natural History & Macro',
+        title: 'Preserved Lizard Specimen Study',
+        subtitle: 'Scale Geometry in Amber Fluid',
+        note: 'Close-range study of intricate reptilian scale patterns and claws preserved in warm amber fluid.',
+        isCover: false,
+        aspect: [2, 3],
+        palette: ['#1c170d', '#6b562b', '#cfa963'],
+        motif: 'specimen-lizard',
+      },
+      {
+        file: '_MG_3038.jpg',
+        altFiles: ['MD MAHFUZ AL MARUF (2).jpg'],
+        branch: 'macro',
+        branchName: 'Natural History & Macro',
+        title: 'Preserved Serpent Specimen Study',
+        subtitle: 'Meniscus & Glass Refraction',
+        note: 'Macro detail of a preserved serpent resting beneath the meniscus of a glass specimen jar.',
+        isCover: false,
+        aspect: [3, 2],
+        palette: ['#1c180f', '#66532c', '#d6be8a'],
+        motif: 'specimen-serpent',
+      },
+    ];
+
+    const PORTRAIT_META = {
+      file: '_MG_7118_edited (4).jpg',
+      title: 'Md. Mahfuz Al Maruf',
+      subtitle: 'Photographer & Student · Rajshahi',
+      aspect: [2, 3],
+      palette: ['#121518', '#252d36', '#d4a857'],
+      motif: 'portrait',
+    };
+
+    // -----------------------------------------------------------------------
+    // 3. BESPOKE ART-DIRECTED SVG PLATE GENERATOR (ZERO BROKEN IMAGES)
+    // -----------------------------------------------------------------------
+    function buildMotifArtwork(motif, w, h, c1, c2, c3) {
+      const cx = w / 2;
+      const cy = h / 2;
+      switch (motif) {
+        case 'lunar-crisp':
+          return `
+            <circle cx="${cx}" cy="${cy - 12}" r="${Math.min(w, h) * 0.24}" fill="${c3}" opacity="0.92"/>
+            <circle cx="${cx - 18}" cy="${cy - 24}" r="18" fill="${c2}" opacity="0.28"/>
+            <circle cx="${cx + 22}" cy="${cy - 6}" r="13" fill="${c2}" opacity="0.24"/>
+            <circle cx="${cx - 6}" cy="${cy + 12}" r="10" fill="${c2}" opacity="0.22"/>
+            <path d="M ${cx - 170} ${cy + 45} Q ${cx} ${cy + 20} ${cx + 170} ${cy + 52}" stroke="${c3}" stroke-width="18" stroke-linecap="round" fill="none" opacity="0.08"/>
+          `;
+        case 'lunar-amber':
+          return `
+            <circle cx="${cx}" cy="${cy - 14}" r="${Math.min(w, h) * 0.34}" fill="${c3}" opacity="0.14"/>
+            <circle cx="${cx}" cy="${cy - 14}" r="${Math.min(w, h) * 0.22}" fill="${c3}" opacity="0.9"/>
+            <circle cx="${cx - 14}" cy="${cy - 20}" r="15" fill="${c2}" opacity="0.22"/>
+          `;
+        case 'lunar-branches':
+          return `
+            <circle cx="${cx + 10}" cy="${cy - 10}" r="${Math.min(w, h) * 0.16}" fill="${c3}" opacity="0.95"/>
+            <path d="M 40 ${h} L ${cx - 30} ${cy - 40} L ${cx - 95} ${cy - 110} M ${cx - 30} ${cy - 40} L ${cx + 65} ${cy + 30}" stroke="#050606" stroke-width="14" stroke-linecap="round" fill="none"/>
+          `;
+        case 'lunar-cloud':
+          return `
+            <circle cx="${cx}" cy="${cy - 12}" r="${Math.min(w, h) * 0.2}" fill="${c3}" opacity="0.9"/>
+            <path d="M ${cx - 150} ${cy - 35} Q ${cx - 40} ${cy - 85} ${cx + 55} ${cy - 30} T ${cx + 170} ${cy - 15}" stroke="${c3}" stroke-width="26" stroke-linecap="round" fill="none" opacity="0.16"/>
+          `;
+        case 'bird-nest':
+        case 'twin-doves':
+        case 'budgie':
+        case 'heron':
+          return `
+            <path d="M 50 ${cy + 35} Q ${cx} ${cy + 10} ${w - 50} ${cy + 42}" stroke="${c2}" stroke-width="10" stroke-linecap="round" fill="none" opacity="0.75"/>
+            <ellipse cx="${cx - 18}" cy="${cy - 6}" rx="20" ry="28" fill="${c3}" opacity="0.88"/>
+            <ellipse cx="${cx + 22}" cy="${cy - 4}" rx="19" ry="27" fill="${c3}" opacity="0.72"/>
+          `;
+        case 'egret-single':
+        case 'egret-pair':
+          return `
+            <rect x="0" y="${cy + 15}" width="${w}" height="${h}" fill="${c2}" opacity="0.45"/>
+            <path d="M ${cx - 10} ${cy + 35} C ${cx - 15} ${cy - 10}, ${cx + 5} ${cy - 35}, ${cx - 4} ${cy - 58}" stroke="${c3}" stroke-width="14" stroke-linecap="round" fill="none" opacity="0.92"/>
+            <polygon points="${cx - 2},${cy - 62} ${cx + 24},${cy - 57} ${cx - 2},${cy - 53}" fill="#d4a857"/>
+          `;
+        case 'duck-water':
+        case 'duck-bamboo':
+          return `
+            <ellipse cx="${cx}" cy="${cy + 8}" rx="56" ry="24" fill="${c3}" opacity="0.88"/>
+            <circle cx="${cx - 46}" cy="${cy - 16}" r="14" fill="#f3f1ec" opacity="0.9"/>
+            <line x1="40" y1="${cy + 34}" x2="${w - 40}" y2="${cy + 34}" stroke="${c3}" stroke-width="3" opacity="0.35"/>
+          `;
+        case 'squirrel':
+        case 'cat':
+          return `
+            <path d="M ${cx + 35} ${h} L ${cx + 20} ${cy - 50} L ${w} ${cy - 75} L ${w} ${h} Z" fill="${c2}" opacity="0.65"/>
+            <ellipse cx="${cx - 6}" cy="${cy - 6}" rx="28" ry="22" fill="${c3}" opacity="0.85"/>
+          `;
+        case 'bridge':
+          return `
+            <path d="M 40 ${cy - 55} Q ${cx} ${cy - 10} ${w - 40} ${cy + 15}" stroke="${c3}" stroke-width="8" fill="none" opacity="0.85"/>
+            <rect x="95" y="${cy - 32}" width="26" height="90" fill="${c3}" opacity="0.65"/>
+            <rect x="175" y="${cy - 18}" width="20" height="76" fill="${c3}" opacity="0.5"/>
+            <rect x="245" y="${cy - 8}" width="15" height="66" fill="${c3}" opacity="0.35"/>
+          `;
+        case 'railway':
+          return `
+            <rect x="45" y="${cy - 36}" width="${w - 90}" height="64" rx="8" fill="${c2}" opacity="0.85"/>
+            <rect x="45" y="${cy - 24}" width="${w - 90}" height="8" fill="${c3}" opacity="0.9"/>
+            <rect x="75" y="${cy - 8}" width="28" height="18" rx="4" fill="#f3f1ec" opacity="0.75"/>
+            <rect x="120" y="${cy - 8}" width="28" height="18" rx="4" fill="#f3f1ec" opacity="0.75"/>
+            <rect x="165" y="${cy - 8}" width="28" height="18" rx="4" fill="#f3f1ec" opacity="0.75"/>
+          `;
+        case 'night-bulbs':
+          return `
+            <circle cx="${cx - 75}" cy="${cy + 12}" r="42" fill="${c3}" opacity="0.16"/>
+            <circle cx="${cx - 75}" cy="${cy + 12}" r="10" fill="${c3}" opacity="0.95"/>
+            <circle cx="${cx + 85}" cy="${cy - 36}" r="28" fill="${c3}" opacity="0.14"/>
+            <circle cx="${cx + 85}" cy="${cy - 36}" r="7" fill="${c3}" opacity="0.9"/>
+          `;
+        case 'rebar-sunset':
+          return `
+            <circle cx="${cx + 22}" cy="${cy + 26}" r="24" fill="${c3}" opacity="0.95"/>
+            <rect x="${cx - 65}" y="${cy - 70}" width="24" height="140" fill="#070605"/>
+            <rect x="${cx + 45}" y="${cy - 70}" width="24" height="140" fill="#070605"/>
+            <rect x="${cx - 65}" y="${cy - 10}" width="134" height="12" fill="#070605"/>
+          `;
+        case 'palace-columns':
+        case 'brick-arch':
+        case 'iron-lattice':
+          return `
+            <path d="M ${cx - 60} ${cy + 55} L ${cx - 60} ${cy - 15} A 60 60 0 0 1 ${cx + 60} ${cy - 15} L ${cx + 60} ${cy + 55}" stroke="${c3}" stroke-width="10" fill="none" opacity="0.8"/>
+            <line x1="${cx - 82}" y1="${cy - 55}" x2="${cx - 82}" y2="${cy + 65}" stroke="${c3}" stroke-width="12" opacity="0.6"/>
+            <line x1="${cx + 82}" y1="${cy - 55}" x2="${cx + 82}" y2="${cy + 65}" stroke="${c3}" stroke-width="12" opacity="0.6"/>
+          `;
+        case 'cooling-towers':
+          return `
+            <path d="M ${cx - 115} ${cy + 45} Q ${cx - 105} ${cy} ${cx - 112} ${cy - 35} L ${cx - 72} ${cy - 35} Q ${cx - 79} ${cy} ${cx - 69} ${cy + 45} Z" fill="${c3}" opacity="0.72"/>
+            <path d="M ${cx - 28} ${cy + 45} Q ${cx - 18} ${cy - 5} ${cx - 25} ${cy - 48} L ${cx + 25} ${cy - 48} Q ${cx + 18} ${cy - 5} ${cx + 28} ${cy + 45} Z" fill="${c3}" opacity="0.88"/>
+            <path d="M ${cx + 69} ${cy + 45} Q ${cx + 79} ${cy} ${cx + 72} ${cy - 35} L ${cx + 112} ${cy - 35} Q ${cx + 105} ${cy} ${cx + 115} ${cy + 45} Z" fill="${c3}" opacity="0.72"/>
+          `;
+        case 'river-sunset':
+          return `
+            <circle cx="${cx + 18}" cy="${cy - 44}" r="22" fill="${c3}" opacity="0.92"/>
+            <line x1="0" y1="${cy + 4}" x2="${w}" y2="${cy + 4}" stroke="${c3}" stroke-width="1.5" opacity="0.4"/>
+            <path d="M ${cx - 28} ${cy + 28} Q ${cx} ${cy + 36} ${cx + 28} ${cy + 28} Z" fill="#0d0905"/>
+          `;
+        case 'storm-rays':
+          return `
+            <polygon points="${cx - 20},${cy - 22} ${cx - 95},${cy + 55} ${cx - 45},${cy + 55}" fill="${c3}" opacity="0.18"/>
+            <polygon points="${cx},${cy - 22} ${cx - 15},${cy + 55} ${cx + 35},${cy + 55}" fill="${c3}" opacity="0.22"/>
+            <path d="M ${cx - 18} ${cy - 46} Q ${cx - 8} ${cy - 54} ${cx} ${cy - 46} Q ${cx + 8} ${cy - 54} ${cx + 18} ${cy - 46}" stroke="#090a0c" stroke-width="3" fill="none"/>
+          `;
+        case 'paddy-workers':
+        case 'street-baank':
+          return `
+            <line x1="${cx - 58}" y1="${cy - 18}" x2="${cx + 58}" y2="${cy - 12}" stroke="${c3}" stroke-width="4" stroke-linecap="round"/>
+            <circle cx="${cx}" cy="${cy - 30}" r="12" fill="${c3}" opacity="0.88"/>
+            <path d="M ${cx - 48} ${cy - 17} L ${cx - 58} ${cy + 16} L ${cx - 38} ${cy + 16} Z" stroke="${c3}" stroke-width="1.5" fill="none" opacity="0.65"/>
+            <path d="M ${cx + 48} ${cy - 13} L ${cx + 38} ${cy + 20} L ${cx + 58} ${cy + 20} Z" stroke="${c3}" stroke-width="1.5" fill="none" opacity="0.65"/>
+          `;
+        case 'specimen-lizard':
+        case 'specimen-serpent':
+          return `
+            <rect x="${cx - 58}" y="${cy - 58}" width="116" height="116" rx="18" stroke="${c3}" stroke-width="2" fill="none" opacity="0.45"/>
+            <path d="M ${cx - 32} ${cy + 28} C ${cx - 32} ${cy - 28}, ${cx + 32} ${cy - 28}, ${cx + 32} ${cy + 22}" stroke="${c3}" stroke-width="12" stroke-linecap="round" fill="none" opacity="0.75"/>
+          `;
+        case 'portrait':
+        default:
+          return `
+            <circle cx="${cx}" cy="${cy - 28}" r="30" fill="${c3}" opacity="0.22" stroke="${c3}" stroke-width="1.5"/>
+            <path d="M ${cx - 58} ${cy + 65} C ${cx - 55} ${cy + 15}, ${cx + 55} ${cy + 15}, ${cx + 58} ${cy + 65}" fill="${c3}" opacity="0.18" stroke="${c3}" stroke-width="1.5"/>
+          `;
+      }
+    }
+
+    function createArtPlateDataUri(meta) {
+      const [aw, ah] = meta.aspect || [3, 2];
+      const baseW = 600;
+      const baseH = Math.round((baseW * ah) / aw);
+      const [c1, c2, c3] = meta.palette || ['#141716', '#262b29', '#d4a857'];
+      const safeTitle = (meta.title || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const safeFile = (meta.file || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const artwork = buildMotifArtwork(meta.motif, baseW, baseH, c1, c2, c3);
+
+      const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="${baseW}" height="${baseH}" viewBox="0 0 ${baseW} ${baseH}">
+          <defs>
+            <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="${c1}"/>
+              <stop offset="100%" stop-color="${c2}"/>
+            </linearGradient>
+          </defs>
+          <rect width="${baseW}" height="${baseH}" fill="url(#bg)"/>
+          <rect x="14" y="14" width="${baseW - 28}" height="${baseH - 28}" rx="12" fill="none" stroke="rgba(243,241,236,0.12)" stroke-width="1"/>
+          ${artwork}
+          <text x="${baseW / 2}" y="${baseH - 44}" text-anchor="middle" fill="#f3f1ec" font-family="Georgia, serif" font-size="18" font-weight="600">${safeTitle}</text>
+          <text x="${baseW / 2}" y="${baseH - 24}" text-anchor="middle" fill="${c3}" font-family="monospace" font-size="11" opacity="0.88">${safeFile} · Click to attach file</text>
+        </svg>
+      `.trim();
+
+      return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    }
+
+    // -----------------------------------------------------------------------
+    // 4. INDEXEDDB PHOTO VAULT & SMART AUTO-MATCHING SYSTEM
+    // -----------------------------------------------------------------------
+    function normalizeKey(filename) {
+      return String(filename || '')
+        .replace(/\.[^/.]+$/, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '');
+    }
+
+    const DB_NAME = 'PTreePhotoVault_v1';
+    const STORE_NAME = 'photos';
+    const loadedObjectUrls = new Map(); // exact file key -> blob URL
+    const triedSubfolder = new Set();
+    let pendingSingleSlotFile = null;
+
+    // Build lookup map of normalized keys & exact lowercase names -> exact canonical filename
+    const ALL_CANONICAL_FILES = [
+      ...PHOTO_ARCHIVE.map((p) => p.file),
+      PORTRAIT_META.file,
+    ];
+    const TOTAL_VAULT_FILES = ALL_CANONICAL_FILES.length; // 34 total files (33 plates + 1 portrait)
+    const EXACT_LOOKUP = new Map();
+    const NORMALIZED_LOOKUP = new Map();
+
+    PHOTO_ARCHIVE.forEach((p) => {
+      const candidates = [p.file, ...(p.altFiles || [])];
+      candidates.forEach((fname) => {
+        EXACT_LOOKUP.set(fname.toLowerCase(), p.file);
+        NORMALIZED_LOOKUP.set(normalizeKey(fname), p.file);
+      });
+    });
+    EXACT_LOOKUP.set(PORTRAIT_META.file.toLowerCase(), PORTRAIT_META.file);
+    NORMALIZED_LOOKUP.set(normalizeKey(PORTRAIT_META.file), PORTRAIT_META.file);
+
+    function openVaultDB() {
+      return new Promise((resolve, reject) => {
+        if (!window.indexedDB) return reject(new Error('IndexedDB unavailable'));
+        const req = indexedDB.open(DB_NAME, 1);
+        req.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains(STORE_NAME)) {
+            db.createObjectStore(STORE_NAME);
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function savePhotoToVault(canonicalFile, blob) {
+      try {
+        const db = await openVaultDB();
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        tx.objectStore(STORE_NAME).put(blob, canonicalFile);
+      } catch (err) {
+        console.warn('Could not persist to IndexedDB:', err);
+      }
+    }
+
+    async function restoreVaultFromDB() {
+      try {
+        const db = await openVaultDB();
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const store = tx.objectStore(STORE_NAME);
+        const keysReq = store.getAllKeys();
+        keysReq.onsuccess = () => {
+          const keys = keysReq.result || [];
+          if (!keys.length) return;
+          let restored = 0;
+          keys.forEach((key) => {
+            const getReq = store.get(key);
+            getReq.onsuccess = () => {
+              if (getReq.result) {
+                const url = URL.createObjectURL(getReq.result);
+                loadedObjectUrls.set(key, url);
+                restored++;
+                if (restored === keys.length) {
+                  refreshAllDisplayedImages();
+                  updateVaultStatusUI();
+                }
+              }
+            };
+          });
+        };
+      } catch (err) {
+        console.warn('IndexedDB restore skipped:', err);
+      }
+    }
+
+    async function clearSavedVault() {
+      try {
+        const db = await openVaultDB();
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        tx.objectStore(STORE_NAME).clear();
+      } catch (err) {
+        console.warn(err);
+      }
+      loadedObjectUrls.forEach((url) => URL.revokeObjectURL(url));
+      loadedObjectUrls.clear();
+      triedSubfolder.clear();
+      refreshAllDisplayedImages();
+      updateVaultStatusUI();
+      showToast('Saved browser photo cache cleared.');
+    }
+
+    function getMetaForFile(canonicalFile) {
+      if (canonicalFile === PORTRAIT_META.file) return PORTRAIT_META;
+      return PHOTO_ARCHIVE.find((p) => p.file === canonicalFile) || {
+        file: canonicalFile,
+        title: canonicalFile,
+        aspect: [3, 2],
+      };
+    }
+
+    function getCandidateUrls(canonicalFile) {
+      const meta = getMetaForFile(canonicalFile);
+      const names = [meta.file, ...(meta.altFiles || [])];
+      const urls = [];
+      names.forEach((name) => {
+        urls.push(`./${name}`);
+        urls.push(`./photos/${name}`);
+      });
+      return urls;
+    }
+
+    function resolvePhotoSrc(canonicalFile) {
+      if (loadedObjectUrls.has(canonicalFile)) {
+        return loadedObjectUrls.get(canonicalFile);
+      }
+      return `./${canonicalFile}`;
+    }
+
+    function handleImageLoadError(imgEl, canonicalFile) {
+      if (imgEl.src.startsWith('data:')) return;
+      const candidates = getCandidateUrls(canonicalFile);
+      const nextIdx = parseInt(imgEl.dataset.candidateIdx || '0', 10) + 1;
+      if (nextIdx < candidates.length) {
+        imgEl.dataset.candidateIdx = String(nextIdx);
+        imgEl.src = candidates[nextIdx];
+        return;
+      }
+      // Final fallback: bespoke art-directed fine-art SVG plate (never broken)
+      const meta = getMetaForFile(canonicalFile);
+      imgEl.onerror = null;
+      imgEl.src = createArtPlateDataUri(meta);
+    }
+
+    function triggerBulkUpload() {
+      document.getElementById('bulkFileInput').click();
+    }
+
+    function triggerFolderUpload() {
+      document.getElementById('folderFileInput').click();
+    }
+
+    function triggerSingleSlotUpload(canonicalFile) {
+      pendingSingleSlotFile = canonicalFile;
+      document.getElementById('singleSlotInput').click();
+    }
+
+    async function handleSingleSlotSelection(fileList) {
+      if (!fileList || !fileList.length || !pendingSingleSlotFile) return;
+      const file = fileList[0];
+      const canonical = pendingSingleSlotFile;
+      pendingSingleSlotFile = null;
+
+      if (loadedObjectUrls.has(canonical)) {
+        URL.revokeObjectURL(loadedObjectUrls.get(canonical));
+      }
+      const url = URL.createObjectURL(file);
+      loadedObjectUrls.set(canonical, url);
+      await savePhotoToVault(canonical, file);
+
+      refreshAllDisplayedImages();
+      updateVaultStatusUI();
+      showToast(`Attached "${file.name}" to ${canonical}`);
+      document.getElementById('singleSlotInput').value = '';
+    }
+
+    async function handleBulkFileSelection(fileList) {
+      if (!fileList || !fileList.length) return;
+      let matchedCount = 0;
+
+      for (const file of Array.from(fileList)) {
+        if (!file.type.startsWith('image/') && !/\.(jpe?g|png|webp|avif)$/i.test(file.name)) {
+          continue;
+        }
+        // Exact match (primary or altFiles) first, then normalized filename stem match
+        let canonical = EXACT_LOOKUP.get(file.name.toLowerCase());
+        if (!canonical) {
+          canonical = NORMALIZED_LOOKUP.get(normalizeKey(file.name));
+        }
+
+        if (canonical) {
+          if (loadedObjectUrls.has(canonical)) {
+            URL.revokeObjectURL(loadedObjectUrls.get(canonical));
+          }
+          const url = URL.createObjectURL(file);
+          loadedObjectUrls.set(canonical, url);
+          await savePhotoToVault(canonical, file);
+          matchedCount++;
+        }
+      }
+
+      refreshAllDisplayedImages();
+      updateVaultStatusUI();
+
+      if (matchedCount > 0) {
+        showToast(`Matched & saved ${matchedCount} photograph${matchedCount > 1 ? 's' : ''} (${loadedObjectUrls.size} / ${TOTAL_VAULT_FILES} linked).`);
+      } else {
+        showToast('No matching filenames found. Use "Attach Photo" on any card to bind manually.');
+      }
+
+      document.getElementById('bulkFileInput').value = '';
+      document.getElementById('folderFileInput').value = '';
+    }
+
+    function updateVaultStatusUI() {
+      const count = loadedObjectUrls.size;
+      const statusEl = document.getElementById('vaultStatusBadge');
+      const heroPill = document.getElementById('heroMatchedPill');
+      const clearBtn = document.getElementById('clearVaultBtn');
+
+      if (heroPill) heroPill.textContent = `${count} / ${TOTAL_VAULT_FILES}`;
+      if (statusEl) {
+        statusEl.textContent =
+          count === TOTAL_VAULT_FILES
+            ? `${TOTAL_VAULT_FILES} / ${TOTAL_VAULT_FILES} Local Originals Linked · Saved in Browser Vault`
+            : `${count} / ${TOTAL_VAULT_FILES} Local Originals Linked · ${count === 0 ? 'Art-Directed Plates Active' : 'Saved in Browser Vault'}`;
+      }
+      if (clearBtn) {
+        if (count > 0) clearBtn.classList.remove('hidden');
+        else clearBtn.classList.add('hidden');
+      }
+
+      // Update portrait badges if portrait is linked
+      const hasPortrait = loadedObjectUrls.has(PORTRAIT_META.file);
+      const heroBadge = document.getElementById('heroPortraitBadge');
+      const aboutBadge = document.getElementById('aboutPortraitBadge');
+      if (heroBadge) heroBadge.textContent = hasPortrait ? 'Portrait Linked ✓' : 'Attach Portrait';
+      if (aboutBadge) aboutBadge.textContent = hasPortrait ? 'Portrait Linked ✓ (Replace)' : 'Attach Portrait (_MG_7118_edited (4).jpg)';
+    }
+
+    function refreshAllDisplayedImages() {
+      // Refresh Hero & About Portraits
+      const heroPortrait = document.getElementById('heroPortraitImg');
+      const aboutPortrait = document.getElementById('aboutPortraitImg');
+      if (heroPortrait) {
+        heroPortrait.dataset.candidateIdx = '0';
+        heroPortrait.onerror = () => handleImageLoadError(heroPortrait, PORTRAIT_META.file);
+        heroPortrait.src = resolvePhotoSrc(PORTRAIT_META.file);
+      }
+      if (aboutPortrait) {
+        aboutPortrait.dataset.candidateIdx = '0';
+        aboutPortrait.onerror = () => handleImageLoadError(aboutPortrait, PORTRAIT_META.file);
+        aboutPortrait.src = resolvePhotoSrc(PORTRAIT_META.file);
+      }
+
+      // Refresh Canopy Inspector Cover
+      selectCanopy(activeCanopyId);
+
+      // Refresh Masonry Grid
+      renderExhibition(currentExhibitionFilter);
+
+      // Refresh Lightbox if open
+      const lbModal = document.getElementById('lightboxModal');
+      if (lbModal && !lbModal.classList.contains('hidden')) {
+        updateLightboxView();
+      }
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('statusToast');
+      const text = document.getElementById('statusToastText');
+      text.textContent = message;
+      toast.classList.remove('hidden');
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 4200);
+    }
+
+    // -----------------------------------------------------------------------
+    // 5. P-TREE INTERACTION LOGIC
+    // -----------------------------------------------------------------------
+    let activeCanopyId = 'lunar';
+    let currentExhibitionFilter = 'all';
+    let visiblePhotos = [...PHOTO_ARCHIVE];
+    let lightboxIndex = 0;
+    let lightboxZoomed = false;
+    let growthModeEnabled = false;
+
+    function selectCanopy(canopyId) {
+      const canopy = CANOPIES[canopyId];
+      if (!canopy) return;
+      activeCanopyId = canopyId;
+
+      document.querySelectorAll('.canopy-node').forEach((n) => n.classList.remove('active'));
+      document.querySelectorAll('.tree-limb').forEach((l) => l.classList.remove('active'));
+
+      const nodeEl = document.getElementById(`node-${canopyId}`);
+      const limbEl = document.getElementById(`limb-${canopyId}`);
+      if (nodeEl) nodeEl.classList.add('active');
+      if (limbEl) limbEl.classList.add('active');
+
+      document.querySelectorAll('.canopy-pill').forEach((pill) => {
+        if (pill.dataset.canopyPill === canopyId) {
+          pill.className = 'canopy-pill px-3 py-1 rounded-full text-xs font-semibold bg-gold text-gallery transition';
+        } else {
+          pill.className = 'canopy-pill px-3 py-1 rounded-full text-xs font-medium bg-gallery text-stone hover:text-alabaster border border-white/10 transition';
+        }
+      });
+
+      const coverImg = document.getElementById('canopyCoverImg');
+      coverImg.dataset.candidateIdx = '0';
+      coverImg.onerror = () => handleImageLoadError(coverImg, canopy.coverFile);
+      coverImg.src = resolvePhotoSrc(canopy.coverFile);
+      coverImg.alt = canopy.coverTitle;
+
+      document.getElementById('canopyTag').textContent = `Canopy Cover · ${canopy.count} Plates`;
+      document.getElementById('canopySubtitle').textContent = canopy.label;
+      document.getElementById('canopyTitle').textContent = canopy.coverTitle;
+      document.getElementById('canopyNote').textContent = canopy.note;
+
+      document.getElementById('canopyTagsList').innerHTML = canopy.tags
+        .map(
+          (tag, idx) =>
+            `<span class="px-2.5 py-1 rounded-lg bg-gallery border border-white/10 ${
+              idx === 0 ? 'text-gold' : 'text-alabaster/85'
+            }">${tag}</span>`
+        )
+        .join('');
+    }
+
+    function openSelectedCanopyInGallery() {
+      filterExhibition(activeCanopyId);
+      document.getElementById('gallery').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function navigateToBranch(branchId) {
+      closeAllDropdowns();
+      if (branchId !== 'all' && CANOPIES[branchId]) {
+        selectCanopy(branchId);
+      }
+      filterExhibition(branchId);
+      document.getElementById('gallery').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function toggleGrowthMode() {
+      growthModeEnabled = !growthModeEnabled;
+      const layer = document.getElementById('growthBudsLayer');
+      const dot = document.getElementById('growthIndicator');
+      const label = document.getElementById('growthLabel');
+
+      if (growthModeEnabled) {
+        if (layer) {
+          layer.classList.remove('opacity-0', 'pointer-events-none');
+          layer.classList.add('opacity-100');
+        }
+        if (dot) {
+          dot.classList.remove('bg-sage/40');
+          dot.classList.add('bg-sage');
+        }
+        if (label) {
+          label.textContent = 'Growth Mode: Active Disciplines';
+        }
+        document.getElementById('research')?.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        if (layer) {
+          layer.classList.remove('opacity-100');
+          layer.classList.add('opacity-0', 'pointer-events-none');
+        }
+        if (dot) {
+          dot.classList.remove('bg-sage');
+          dot.classList.add('bg-sage/40');
+        }
+        if (label) {
+          label.textContent = 'Growth Mode: Full Portfolio';
+        }
+      }
+    }
+
+    // -----------------------------------------------------------------------
+    // 6. EXHIBITION MASONRY GALLERY RENDERING & FILTERING
+    // -----------------------------------------------------------------------
+    function renderExhibition(filter = 'all') {
+      currentExhibitionFilter = filter;
+      visiblePhotos =
+        filter === 'all'
+          ? [...PHOTO_ARCHIVE]
+          : PHOTO_ARCHIVE.filter((item) => item.branch === filter);
+
+      const grid = document.getElementById('exhibitionGrid');
+      grid.innerHTML = visiblePhotos
+        .map((photo, idx) => {
+          const isLinked = loadedObjectUrls.has(photo.file);
+          return `
+          <figure
+            class="masonry-item photo-plate group bg-surface border border-white/[0.09] hover:border-gold/50 rounded-2xl overflow-hidden shadow-xl transition"
+          >
+            <div class="relative overflow-hidden bg-gallery cursor-pointer" onclick="openLightbox(${idx})">
+              <img
+                src="${resolvePhotoSrc(photo.file)}"
+                alt="${photo.title}"
+                loading="lazy"
+                data-candidate-idx="0"
+                onerror="handleImageLoadError(this, '${photo.file.replace(/'/g, "\\'")}')"
+                class="w-full h-auto block"
+              />
+              ${
+                photo.isCover
+                  ? `<span class="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-gallery/85 text-gold border border-gold/40 backdrop-blur-sm">Lunar Cover</span>`
+                  : ''
+              }
+              <button
+                type="button"
+                onclick="event.stopPropagation(); triggerSingleSlotUpload('${photo.file.replace(/'/g, "\\'")}')"
+                class="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-medium ${
+                  isLinked
+                    ? 'bg-gallery/80 text-sage border border-sage/40 opacity-0 group-hover:opacity-100'
+                    : 'bg-gallery/90 text-gold border border-gold/40 hover:bg-gold hover:text-gallery'
+                } backdrop-blur-sm transition"
+              >
+                ${isLinked ? 'Linked ✓' : 'Attach Photo'}
+              </button>
+            </div>
+
+            <figcaption onclick="openLightbox(${idx})" class="p-4 sm:p-5 space-y-1.5 cursor-pointer">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-[10px] font-semibold uppercase tracking-widest text-gold">${photo.branchName}</span>
+                <span class="text-[11px] text-stone group-hover:text-gold transition">Inspect ↗</span>
+              </div>
+              <h3 class="font-serif text-xl font-semibold text-alabaster group-hover:text-gold transition leading-snug">
+                ${photo.title}
+              </h3>
+              <p class="text-xs text-stone leading-relaxed">
+                ${photo.subtitle}
+              </p>
+            </figcaption>
+          </figure>
+        `;
+        })
+        .join('');
+    }
+
+    function filterExhibition(branchFilter) {
+      document.querySelectorAll('.exhibit-filter-btn').forEach((btn) => {
+        if (btn.dataset.exhibitFilter === branchFilter) {
+          btn.className = 'exhibit-filter-btn px-3.5 py-2 rounded-xl text-xs font-semibold bg-gold text-gallery transition';
+        } else {
+          btn.className = 'exhibit-filter-btn px-3.5 py-2 rounded-xl text-xs font-medium bg-surface text-stone hover:text-alabaster border border-white/10 transition';
+        }
+      });
+      renderExhibition(branchFilter);
+    }
+
+    // -----------------------------------------------------------------------
+    // 7. FULL-SCREEN LIGHTBOX WITH KEYBOARD & ZOOM SUPPORT
+    // -----------------------------------------------------------------------
+    function openLightbox(index) {
+      lightboxIndex = index;
+      lightboxZoomed = false;
+      updateLightboxView();
+      document.getElementById('lightboxModal').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+      document.getElementById('lightboxModal').classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+
+    function stepLightbox(delta) {
+      if (!visiblePhotos.length) return;
+      lightboxIndex = (lightboxIndex + delta + visiblePhotos.length) % visiblePhotos.length;
+      lightboxZoomed = false;
+      updateLightboxView();
+    }
+
+    function attachPhotoFromLightbox() {
+      const item = visiblePhotos[lightboxIndex];
+      if (item) triggerSingleSlotUpload(item.file);
+    }
+
+    function toggleLightboxZoom() {
+      lightboxZoomed = !lightboxZoomed;
+      const img = document.getElementById('lbImg');
+      const btn = document.getElementById('lbZoomBtn');
+      if (lightboxZoomed) {
+        img.classList.remove('max-h-[70vh]', 'w-auto', 'cursor-zoom-in');
+        img.classList.add('max-h-none', 'w-full', 'max-w-5xl', 'cursor-zoom-out');
+        btn.textContent = 'Zoom: 100%';
+      } else {
+        img.classList.remove('max-h-none', 'w-full', 'max-w-5xl', 'cursor-zoom-out');
+        img.classList.add('max-h-[70vh]', 'w-auto', 'cursor-zoom-in');
+        btn.textContent = 'Zoom: Fit';
+      }
+    }
+
+    function updateLightboxView() {
+      const item = visiblePhotos[lightboxIndex];
+      if (!item) return;
+
+      const img = document.getElementById('lbImg');
+      img.dataset.candidateIdx = '0';
+      img.onerror = () => handleImageLoadError(img, item.file);
+      img.src = resolvePhotoSrc(item.file);
+      img.alt = item.title;
+      img.className = 'max-h-[70vh] w-auto object-contain rounded-xl shadow-2xl cursor-zoom-in transition-all duration-300';
+      document.getElementById('lbZoomBtn').textContent = 'Zoom: Fit';
+
+      document.getElementById('lbCounter').textContent = `${String(lightboxIndex + 1).padStart(2, '0')} / ${String(visiblePhotos.length).padStart(2, '0')}`;
+      document.getElementById('lbBranchTag').textContent = item.branchName;
+      document.getElementById('lbTitle').textContent = item.title;
+      document.getElementById('lbFilenameTag').textContent = item.altFiles && item.altFiles.length ? `${item.file} (${item.altFiles[0]})` : item.file;
+      document.getElementById('lbCaption').textContent = item.note;
+
+      const coverBadge = document.getElementById('lbCoverBadge');
+      if (item.isCover) {
+        coverBadge.classList.remove('hidden');
+      } else {
+        coverBadge.classList.add('hidden');
+      }
+
+      const extLink = document.getElementById('lbExternalUrl');
+      if (item.externalUrl) {
+        extLink.href = item.externalUrl;
+        extLink.classList.remove('hidden');
+      } else {
+        extLink.classList.add('hidden');
+      }
+    }
+
+    // -----------------------------------------------------------------------
+    // 8. DROPDOWNS, DRAG-AND-DROP & INITIALIZATION
+    // -----------------------------------------------------------------------
+    function toggleDropdown(id) {
+      const container = document.getElementById(id);
+      const isOpen = container.classList.contains('dropdown-open');
+      closeAllDropdowns();
+      if (!isOpen) {
+        container.classList.add('dropdown-open');
+        const btn = container.querySelector('button');
+        if (btn) btn.setAttribute('aria-expanded', 'true');
+      }
+    }
+
+    function closeAllDropdowns() {
+      document.querySelectorAll('.dropdown-container').forEach((el) => {
+        el.classList.remove('dropdown-open');
+        const btn = el.querySelector('button');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+      });
+    }
+
+    function toggleMobileDrawer() {
+      document.getElementById('mobileDrawer').classList.toggle('hidden');
+    }
+
+    function toggleBlueprintDrawer() {
+      const content = document.getElementById('blueprintContent');
+      const label = document.getElementById('blueprintChevron');
+      const isHidden = content.classList.contains('hidden');
+      content.classList.toggle('hidden');
+      label.textContent = isHidden ? 'Hide Guide −' : 'Show Guide +';
+    }
+
+    // Global Drag & Drop Support
+    let dragDepth = 0;
+    window.addEventListener('dragenter', (e) => {
+      if (e.dataTransfer && Array.from(e.dataTransfer.types).includes('Files')) {
+        e.preventDefault();
+        dragDepth++;
+        document.getElementById('dragDropOverlay').classList.remove('hidden');
+      }
+    });
+    window.addEventListener('dragover', (e) => {
+      if (e.dataTransfer && Array.from(e.dataTransfer.types).includes('Files')) {
+        e.preventDefault();
+      }
+    });
+    window.addEventListener('dragleave', (e) => {
+      if (e.dataTransfer && Array.from(e.dataTransfer.types).includes('Files')) {
+        dragDepth = Math.max(0, dragDepth - 1);
+        if (dragDepth === 0) {
+          document.getElementById('dragDropOverlay').classList.add('hidden');
+        }
+      }
+    });
+    window.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dragDepth = 0;
+      document.getElementById('dragDropOverlay').classList.add('hidden');
+      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+        handleBulkFileSelection(e.dataTransfer.files);
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.dropdown-container')) {
+        closeAllDropdowns();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      const modal = document.getElementById('lightboxModal');
+      const isLightboxOpen = !modal.classList.contains('hidden');
+
+      if (e.key === 'Escape') {
+        closeAllDropdowns();
+        if (isLightboxOpen) closeLightbox();
+      } else if (isLightboxOpen && e.key === 'ArrowRight') {
+        stepLightbox(1);
+      } else if (isLightboxOpen && e.key === 'ArrowLeft') {
+        stepLightbox(-1);
+      }
+    });
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      // Wire portrait fallbacks immediately
+      const heroPortrait = document.getElementById('heroPortraitImg');
+      const aboutPortrait = document.getElementById('aboutPortraitImg');
+      heroPortrait.onerror = () => handleImageLoadError(heroPortrait, PORTRAIT_META.file);
+      aboutPortrait.onerror = () => handleImageLoadError(aboutPortrait, PORTRAIT_META.file);
+
+      selectCanopy('lunar');
+      renderExhibition('all');
+      updateVaultStatusUI();
+
+      // Restore any previously saved photos from IndexedDB
+      await restoreVaultFromDB();
+    });
+  </script>
+</body>
+</html>
